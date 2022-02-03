@@ -4,6 +4,10 @@ on:
     branches:
       - main
   workflow_dispatch:
+  workflow_call:
+    secrets:
+      token:
+        required: true
 jobs:
   setup:
     if: "${{ (github.event_name == 'push' && contains(github.event.commits[0].message, 'Initial commit')) || github.event_name == 'workflow_dispatch' }}"
@@ -13,6 +17,6 @@ jobs:
         uses: ndcmsl/repo-setup-action@main
         id: create_branch_protections
         with:
-          token: ${{ secrets.OCTOKIT_REPO_SETUP }}
+          token: ${{ secrets.token }}
           repo: ${{ github.repository }}
           owner: ${{ github.repository_owner }}
