@@ -15,7 +15,7 @@ jobs:
           ref: dev
           fetch-depth: 0
       - name: Merge unrelated histories
-        run: "git merge main --allow-unrelated-histories"
+        run: "git merge origin/main --allow-unrelated-histories"
       - name: Push
         run: "git push"
       - name: Create branch protections
