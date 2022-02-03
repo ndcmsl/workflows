@@ -15,9 +15,11 @@ jobs:
           ref: dev
           fetch-depth: 0
       - name: Merge unrelated histories
-        run: "git merge origin/main --allow-unrelated-histories"
-      - name: Push
-        run: "git push"
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com 
+          git merge origin/main --allow-unrelated-histories
+          git push
       - name: Create branch protections
         uses: ndcmsl/repo-setup-action@main
         id: create_branch_protections
