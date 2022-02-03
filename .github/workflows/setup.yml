@@ -12,13 +12,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          ref: dev
           fetch-depth: 0
       - name: Merge unrelated histories
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com 
-          git merge origin/main --allow-unrelated-histories
+          git merge origin/dev --allow-unrelated-histories
           git push
       - name: Create branch protections
         uses: ndcmsl/repo-setup-action@main
