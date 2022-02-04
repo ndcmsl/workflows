@@ -1,6 +1,10 @@
 name: Repo Setup
 on:
   workflow_call:
+    inputs:
+      topic:
+        type: string
+        required: false
     secrets:
       token:
         required: true
@@ -26,3 +30,4 @@ jobs:
           token: ${{ secrets.token }}
           repo: ${{ github.repository }}
           owner: ${{ github.repository_owner }}
+          topic: ${{ inputs.topic }}
