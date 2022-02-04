@@ -8,10 +8,6 @@ env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
-  GIT_AUTHOR_NAME: "@semantic-release-bot"
-  GIT_AUTHOR_EMAIL: "@semantic-release-bot"
-  GIT_COMMITTER_NAME: "@semantic-release-bot"
-  GIT_COMMITTER_EMAIL: "@semantic-release-bot"
 jobs:
   release:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"
