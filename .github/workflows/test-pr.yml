@@ -1,0 +1,31 @@
+name: Main & Dev Unit Tests
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+env:
+  GH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout develop branch
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Run Node.js test
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          scope: "@ndcmsl"
+          registry-url: "https://npm.pkg.github.com"
+      - run: npm install
+      - run: npm run test
