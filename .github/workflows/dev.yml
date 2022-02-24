@@ -68,6 +68,6 @@ jobs:
         with:
           push: true
           build-args: |
-            NPM_TOKEN=${{ secrets.NPM_TOKEN }}
+            NPM_TOKEN=${{ secrets.token }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
