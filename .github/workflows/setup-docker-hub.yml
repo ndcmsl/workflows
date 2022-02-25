@@ -1,0 +1,29 @@
+name: Setup a Docker repository with Terraform 
+on:
+  workflow_call:
+jobs:
+  release:
+    name: Setup a Docker repository with Terraform 
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.6
+
+      - uses: xom9ikk/split@v1
+        id: split
+        with:
+          string: ${{ github.repository }}
+          separator: /
+
+      - uses: actions/checkout@v2
+        with:
+          repository: ndcmsl/workflows
+
+      - run: terraform init
+      - run: terraform apply -auto-approve
+        env:
+          TF_VAR_repo_name:  ${{ steps.split.outputs._1 }}
+          TF_VAR_docker_user: ${{ secrets.DOCKER_USERNAME }}
+          TF_VAR_docker_pass: ${{ secrets.DOCKER_PASSWORD }}
