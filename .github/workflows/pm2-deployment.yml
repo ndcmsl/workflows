@@ -1,0 +1,98 @@
+name: "PM2 Deployment"
+on:
+  workflow_call:  
+    inputs:
+      remote-path:
+        type: string
+        description: "Remote path where the files are going to be copied"
+        required: true
+      host:
+        type: string
+        description: "Remote host"
+        required: true
+      username:
+        type: string
+        description: "Username to login"
+        required: true
+      port:
+        type: number
+        description: "SSH port"
+        required: true
+        default: "22"
+      password:
+        type: string
+        description: "SSH password"
+        required: true
+      automatic-pre-deploy:
+        type: boolean
+        description: "Deploy automatically"
+        required: true
+        default: true
+      yarn:
+        type: boolean
+        description: "Do you want to use yarn?"
+        required: true
+        default: false
+      build:
+        type: boolean
+        description: "Do you want to build your typescript code?"
+        required: true
+      pm2-id: 
+        type: string
+        description: "PM2 ID or Name of the process"
+        required: true
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Copy repository contents
+        uses: appleboy/scp-action@master
+        env:
+          HOST: ${{ inputs.host }}
+          USERNAME: ${{ inputs.username }}
+          PORT: ${{ inputs.port }}
+          PASSWORD: ${{ inputs.password }}
+        with:
+          source: "."
+          target: ${{ inputs.remote-path }}
+          
+      - name: Run npm clean-install
+        if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == false }}
+        uses: appleboy/ssh-action@master
+        with:
+          HOST: ${{ inputs.host }}
+          USERNAME: ${{ inputs.username }}
+          PORT: ${{ inputs.port }}
+          PASSWORD: ${{ inputs.password }}
+          script: cd ${{ inputs.remote-path }} && npm ci
+          
+      - name: Run yarn install
+        if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == true }}
+        uses: appleboy/ssh-action@master
+        with:
+          HOST: ${{ inputs.host }}
+          USERNAME: ${{ inputs.username }}
+          PORT: ${{ inputs.port }}
+          PASSWORD: ${{ inputs.password }}
+          script: cd ${{ inputs.remote-path }} && yarn install
+        
+      - name: Build your Typescript
+        if: ${{ inputs.build == true }}
+        uses: appleboy/ssh-action@master
+        with:
+          HOST: ${{ inputs.host }}
+          USERNAME: ${{ inputs.username }}
+          PORT: ${{ inputs.port }}
+          PASSWORD: ${{ inputs.password }}
+          script: cd ${{ inputs.remote-path }} && npm run build
+          
+      - name: Restart remote application
+        uses: appleboy/ssh-action@master
+        with:
+          HOST: ${{ inputs.host }}
+          USERNAME: ${{ inputs.username }}
+          PORT: ${{ inputs.port }}
+          PASSWORD: ${{ inputs.password }}
+          script: pm2 restart ${{ inputs.pm2-id }}
