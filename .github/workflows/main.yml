@@ -5,17 +5,10 @@ on:
     secrets:
       token:
         required: true
-      docker_username:
-        required: true
-      docker_password:
-        required: true
-
 env: 
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
-  DOCKER_USERNAME: ${{ secrets.docker_username }}
-  DOCKER_PASSWORD: ${{ secrets.docker_password }}
 
 jobs:
 
