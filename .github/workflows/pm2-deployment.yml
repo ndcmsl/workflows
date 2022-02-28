@@ -19,7 +19,7 @@ on:
       port:
         type: number
         description: "SSH port"
-        required: true
+        required: false
         default: 22
       automatic-pre-deploy:
         type: boolean
@@ -29,12 +29,13 @@ on:
       yarn:
         type: boolean
         description: "Do you want to use yarn?"
-        required: true
+        required: false
         default: false
       build:
         type: boolean
         description: "Do you want to build your typescript code?"
-        required: true
+        required: false
+        default: false
       pm2-id: 
         type: string
         description: "PM2 ID or Name of the process"
