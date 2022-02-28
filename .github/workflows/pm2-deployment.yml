@@ -1,28 +1,26 @@
 name: "PM2 Deployment"
 on:
   workflow_call:  
+    secrets:
+      host:
+        description: "Remote host"
+        required: true
+      username:
+        description: "Username to login"
+        required: true
+      password:
+        description: "SSH password"
+        required: true
     inputs:
       remote-path:
         type: string
         description: "Remote path where the files are going to be copied"
-        required: true
-      host:
-        type: string
-        description: "Remote host"
-        required: true
-      username:
-        type: string
-        description: "Username to login"
         required: true
       port:
         type: number
         description: "SSH port"
         required: true
         default: "22"
-      password:
-        type: string
-        description: "SSH password"
-        required: true
       automatic-pre-deploy:
         type: boolean
         description: "Deploy automatically"
