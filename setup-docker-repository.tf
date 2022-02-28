@@ -14,7 +14,7 @@ provider "dockerhub" {
 
 resource "dockerhub_repository" "repository" {
   name = var.repo_name
-  namespace = "indecemisl"
+  namespace = "ndcmsl"
   private = true
 }
 
