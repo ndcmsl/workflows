@@ -40,6 +40,12 @@ on:
         type: string
         description: "PM2 ID or Name of the process"
         required: true
+      reload: 
+        type: boolean
+        description: "Use reload instead of restart"
+        required: false
+        default: false
+
 jobs:
   deploy:
     runs-on: self-hosted
@@ -86,8 +92,9 @@ jobs:
           PORT: ${{ inputs.port }}
           PASSWORD: ${{ secrets.password }}
           script: cd ${{ inputs.remote-path }} && npm run build
-          
-      - name: Restart remote application
+
+      - name: Reload remote application
+        if: ${{ inputs.reload == false }}
         uses: appleboy/ssh-action@master
         with:
           HOST: ${{ secrets.host }}
@@ -95,3 +102,13 @@ jobs:
           PORT: ${{ inputs.port }}
           PASSWORD: ${{ secrets.password }}
           script: pm2 restart ${{ inputs.pm2-id }}
+          
+      - name: Restart remote application
+        if: ${{ inputs.reload == true }}
+        uses: appleboy/ssh-action@master
+        with:
+          HOST: ${{ secrets.host }}
+          USERNAME: ${{ secrets.username }}
+          PORT: ${{ inputs.port }}
+          PASSWORD: ${{ secrets.password }}
+          script: pm2 reload ${{ inputs.pm2-id }}
