@@ -20,11 +20,11 @@ on:
         type: number
         description: "SSH port"
         required: true
-        default: "22"
+        default: 22
       automatic-pre-deploy:
         type: boolean
         description: "Deploy automatically"
-        required: true
+        required: false
         default: true
       yarn:
         type: boolean
