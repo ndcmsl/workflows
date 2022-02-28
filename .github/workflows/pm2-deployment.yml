@@ -49,10 +49,10 @@ jobs:
       - name: Copy repository contents
         uses: appleboy/scp-action@master
         env:
-          HOST: ${{ inputs.host }}
-          USERNAME: ${{ inputs.username }}
+          HOST: ${{ secrets.host }}
+          USERNAME: ${{ secrets.username }}
           PORT: ${{ inputs.port }}
-          PASSWORD: ${{ inputs.password }}
+          PASSWORD: ${{ secrets.password }}
         with:
           source: "."
           target: ${{ inputs.remote-path }}
@@ -61,37 +61,37 @@ jobs:
         if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == false }}
         uses: appleboy/ssh-action@master
         with:
-          HOST: ${{ inputs.host }}
-          USERNAME: ${{ inputs.username }}
+          HOST: ${{ secrets.host }}
+          USERNAME: ${{ secrets.username }}
           PORT: ${{ inputs.port }}
-          PASSWORD: ${{ inputs.password }}
+          PASSWORD: ${{ secrets.password }}
           script: cd ${{ inputs.remote-path }} && npm ci
           
       - name: Run yarn install
         if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == true }}
         uses: appleboy/ssh-action@master
         with:
-          HOST: ${{ inputs.host }}
-          USERNAME: ${{ inputs.username }}
+          HOST: ${{ secrets.host }}
+          USERNAME: ${{ secrets.username }}
           PORT: ${{ inputs.port }}
-          PASSWORD: ${{ inputs.password }}
+          PASSWORD: ${{ secrets.password }}
           script: cd ${{ inputs.remote-path }} && yarn install
         
       - name: Build your Typescript
         if: ${{ inputs.build == true }}
         uses: appleboy/ssh-action@master
         with:
-          HOST: ${{ inputs.host }}
-          USERNAME: ${{ inputs.username }}
+          HOST: ${{ secrets.host }}
+          USERNAME: ${{ secrets.username }}
           PORT: ${{ inputs.port }}
-          PASSWORD: ${{ inputs.password }}
+          PASSWORD: ${{ secrets.password }}
           script: cd ${{ inputs.remote-path }} && npm run build
           
       - name: Restart remote application
         uses: appleboy/ssh-action@master
         with:
-          HOST: ${{ inputs.host }}
-          USERNAME: ${{ inputs.username }}
+          HOST: ${{ secrets.host }}
+          USERNAME: ${{ secrets.username }}
           PORT: ${{ inputs.port }}
-          PASSWORD: ${{ inputs.password }}
+          PASSWORD: ${{ secrets.password }}
           script: pm2 restart ${{ inputs.pm2-id }}
