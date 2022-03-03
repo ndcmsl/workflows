@@ -16,9 +16,6 @@ on:
         type: string
         required: false
         default: "Nueva release"
-      title:
-        type: string
-        required: false
       sender-name:
         type: string
         required: false
@@ -53,6 +50,8 @@ jobs:
         run: npm ci
       - name: Release
         run: npx semantic-release
+      - name: Checkout after semantic-release
+        uses: actions/checkout@v2
       - name: Send Cliq
         uses: ind-vargento/release-cliq-action@master
         with:
