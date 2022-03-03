@@ -16,6 +16,9 @@ on:
         type: string
         required: false
         default: "Nueva release"
+      title:
+        type: string
+        required: false
       sender-name:
         type: string
         required: false
