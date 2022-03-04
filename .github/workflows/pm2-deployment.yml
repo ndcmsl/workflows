@@ -59,7 +59,7 @@ jobs:
         uses: appleboy/scp-action@master
         with:
           source: "."
-          target: ${{ inputs.remote-path }}
+          target: ${{ env.REMOTE_PATH }}
           
       - name: Run npm clean-install
         if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == false }}
