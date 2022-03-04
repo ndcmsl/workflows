@@ -12,10 +12,6 @@ on:
         description: "SSH password"
         required: true
     inputs:
-      remote-path:
-        type: string
-        description: "Remote path where the files are going to be copied"
-        required: true
       port:
         type: number
         description: "SSH port"
@@ -36,10 +32,6 @@ on:
         description: "Do you want to build your typescript code?"
         required: false
         default: false
-      pm2-id: 
-        type: string
-        description: "PM2 ID or Name of the process"
-        required: true
       reload: 
         type: boolean
         description: "Use reload instead of restart"
@@ -56,6 +48,11 @@ jobs:
 
     runs-on: self-hosted
     steps:
+      - name: Set repository name
+        run: |
+          REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2)
+          echo REPO_NAME=$REPO_NAME >> $GITHUB_ENV
+          echo REMOTE_PATH=/deployment/$REPO_NAME >> $GITHUB_ENV
       - uses: actions/checkout@v2
       
       - name: Copy repository contents
@@ -68,28 +65,28 @@ jobs:
         if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == false }}
         uses: appleboy/ssh-action@master
         with:
-          script: cd ${{ inputs.remote-path }} && npm ci
+          script: cd ${{ env.REMOTE_PATH }} && npm ci
           
       - name: Run yarn install
         if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == true }}
         uses: appleboy/ssh-action@master
         with:
-          script: cd ${{ inputs.remote-path }} && yarn install
+          script: cd ${{ env.REMOTE_PATH }} && yarn install
         
       - name: Build project
         if: ${{ inputs.build == true }}
         uses: appleboy/ssh-action@master
         with:
-          script: cd ${{ inputs.remote-path }} && npm run build
+          script: cd ${{ env.REMOTE_PATH }} && npm run build
 
       - name: Restart remote application
         if: ${{ inputs.reload == false }}
         uses: appleboy/ssh-action@master
         with:
-          script: pm2 restart ${{ inputs.pm2-id }}
+          script: pm2 restart ${{ env.REPO_NAME }}
           
       - name: Reload remote application
         if: ${{ inputs.reload == true }}
         uses: appleboy/ssh-action@master
         with:
-          script: pm2 reload ${{ inputs.pm2-id }}
+          script: pm2 reload ${{ env.REPO_NAME }}
