@@ -4,27 +4,6 @@ on:
     secrets:
       token:
         required: true
-      webhook_cliq:
-        required: true
-      token_cliq:
-        required: true
-    inputs:
-      repository_name:
-        type: string
-        required: false
-      text:
-        type: string
-        required: false
-        default: "Nueva release"
-      sender-name:
-        type: string
-        required: false
-        default: "Github Actions"
-      sender-image:
-        type: string
-        required: false
-        default: "https://pbs.twimg.com/profile_images/1414990564408262661/r6YemvF9_400x400.jpg"
-
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
@@ -50,14 +29,3 @@ jobs:
         run: npm ci
       - name: Release
         run: npx semantic-release
-      - name: Checkout after semantic-release
-        uses: actions/checkout@v2
-      - name: Send Cliq
-        uses: ind-vargento/release-cliq-action@master
-        with:
-          webhook: ${{ secrets.webhook_cliq }}
-          token: ${{ secrets.token_cliq }}
-          text: ${{ inputs.text }}
-          title: "${{ inputs.repository_name }}"
-          sender-name: ${{ inputs.sender-name }}
-          sender-image: ${{ inputs.sender-image }}
