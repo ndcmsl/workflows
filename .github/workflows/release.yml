@@ -26,8 +26,9 @@ jobs:
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
 
-      - name: Setup Node.js
-        run: echo ${{ GITHUB_REF##*/ }}
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
 
       - name: Cache node modules
         id: cacheStep
