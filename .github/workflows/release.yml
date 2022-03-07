@@ -26,8 +26,8 @@ jobs:
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
       - name: Cache node modules
+        id: cacheStep
         uses: actions/cache@v2
-        id: npm-cache
         env:
           cache-name: cache-node-modules
         with:
@@ -38,7 +38,7 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Install dependencies
-        if: steps.npm-cache.outputs.cache-hit != 'true'
+        if: steps.cacheStep.outputs.cache-hit != 'true'
         run: npm ci
       - name: Release
         run: npx semantic-release
