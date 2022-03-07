@@ -26,12 +26,12 @@ jobs:
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
 
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
 
       - name: echo version
-        run: echo ${{ steps.get_version.outputs.VERSION }}
+        run: echo ${{ steps.previoustag.outputs.tag }}
 
       - name: Cache node modules
         id: cacheStep
