@@ -30,6 +30,9 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
 
+      - name: echo version
+        run: echo ${{ steps.get_version.outputs.VERSION }}
+
       - name: Cache node modules
         id: cacheStep
         uses: actions/cache@v2
