@@ -25,6 +25,9 @@ jobs:
           node-version: 'lts/*'
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
+
+      - uses: echo ${{ GITHUB_REF##*/ }}
+
       - name: Cache node modules
         id: cacheStep
         uses: actions/cache@v2
@@ -37,7 +40,6 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-            
       - name: Install dependencies
         if: steps.cacheStep.outputs.cache-hit != 'true'
         run: npm ci
