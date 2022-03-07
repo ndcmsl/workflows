@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - run: echo ${{ steps.cacheStep.outputs.cache-hit }}
+            
       - name: Install dependencies
         if: steps.cacheStep.outputs.cache-hit != 'true'
         run: npm ci
