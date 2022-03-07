@@ -26,7 +26,8 @@ jobs:
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
 
-      - uses: echo ${{ GITHUB_REF##*/ }}
+      - name: Setup Node.js
+        uses: echo ${{ GITHUB_REF##*/ }}
 
       - name: Cache node modules
         id: cacheStep
