@@ -27,7 +27,7 @@ jobs:
           registry-url: "https://npm.pkg.github.com"
 
       - name: Setup Node.js
-        uses: echo ${{ GITHUB_REF##*/ }}
+        run: echo ${{ GITHUB_REF##*/ }}
 
       - name: Cache node modules
         id: cacheStep
