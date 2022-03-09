@@ -22,9 +22,9 @@ on:
         description: "Deploy automatically"
         required: false
         default: true
-      yarn:
+      pnpm:
         type: boolean
-        description: "Do you want to use yarn?"
+        description: "Do you want to use pnpm?"
         required: false
         default: false
       build:
@@ -62,16 +62,16 @@ jobs:
           target: ${{ env.REMOTE_PATH }}
           
       - name: Run npm clean-install
-        if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == false }}
+        if: ${{ inputs.automatic-pre-deploy == true && inputs.pnpm == false }}
         uses: appleboy/ssh-action@master
         with:
           script: cd ${{ env.REMOTE_PATH }} && npm ci
           
-      - name: Run yarn install
-        if: ${{ inputs.automatic-pre-deploy == true && inputs.yarn == true }}
+      - name: Run pnpm install
+        if: ${{ inputs.automatic-pre-deploy == true && inputs.pnpm == true }}
         uses: appleboy/ssh-action@master
         with:
-          script: cd ${{ env.REMOTE_PATH }} && yarn install
+          script: cd ${{ env.REMOTE_PATH }} && pnpm install
         
       - name: Build project
         if: ${{ inputs.build == true }}
