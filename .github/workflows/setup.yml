@@ -24,7 +24,7 @@ jobs:
           git merge origin/dev --allow-unrelated-histories
           git push
       - name: Create branch protections
-        uses: ndcmsl/repo-setup-action@main
+        uses: ndcmsl/repo-setup-action@feature/fix-setup
         id: create_branch_protections
         with:
           token: ${{ secrets.token }}
