@@ -34,7 +34,7 @@ jobs:
       - name: Set envs
         run: |
           REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2)
-          REPO_TAG=$(git tag -l --sort=-creatordate)
+          REPO_TAG=$(git tag -l --sort=-creatordate | head -n 1)
           echo REPO_NAME=$REPO_NAME >> $GITHUB_ENV
           echo REMOTE_PATH=/deploy-cache/$REPO_NAME >> $GITHUB_ENV
           echo REPO_TAG=$REPO_TAG >> $GITHUB_ENV
