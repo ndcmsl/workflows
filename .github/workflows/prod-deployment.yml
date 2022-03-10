@@ -38,12 +38,12 @@ jobs:
           echo REMOTE_PATH=/deploy-cache/$REPO_NAME >> $GITHUB_ENV
           echo REPO_TAG=$REPO_TAG >> $GITHUB_ENV
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-          scope: "@ndcmsl"
-          registry-url: "https://npm.pkg.github.com"
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v2
+      #   with:
+      #     node-version: '16'
+      #     scope: "@ndcmsl"
+      #     registry-url: "https://npm.pkg.github.com"
       - run: pnpm install
       - run: pnpm run build
       - run: rm -rf ./node_modules ./.git
