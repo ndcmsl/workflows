@@ -1,0 +1,76 @@
+name: "Prod Deployment"
+on:
+  workflow_call:  
+    secrets:
+      host:
+        description: "Remote host"
+        required: true
+      username:
+        description: "Username to login"
+        required: true
+      password:
+        description: "SSH password"
+        required: true
+    inputs:
+      reload: 
+        type: boolean
+        description: "Use reload instead of restart"
+        required: false
+        default: false
+
+jobs:
+  deploy:
+    env:
+      HOST: ${{ secrets.host }}
+      USERNAME: ${{ secrets.username }}
+      PORT: ${{ inputs.port }}
+      PASSWORD: ${{ secrets.password }}
+
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set envs
+        run: |
+          REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2)
+          REPO_TAG=$(git tag -l --sort=-creatordate | head -n 1)
+          echo REPO_NAME=$REPO_NAME >> $GITHUB_ENV
+          echo REMOTE_PATH=/deploy-cache/$REPO_NAME >> $GITHUB_ENV
+          echo REPO_TAG=$REPO_TAG >> $GITHUB_ENV
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          scope: "@ndcmsl"
+          registry-url: "https://npm.pkg.github.com"
+      - run: pnpm install
+      - run: pnpm run build
+      - run: rm -rf ./node_modules ./.git
+      - run: pnpm install --prod --ignore-scripts
+
+      - name: Copy repository contents
+        uses: appleboy/scp-action@master
+        with:
+          source: "."
+          target: ${{ env.REMOTE_PATH }}
+
+      - name: Create release folder and copy content
+        uses: appleboy/ssh-action@master
+        with:
+          script: |
+            mkdir -p /release/${{ env.REPO_NAME }}/${{ env.REPO_TAG }}
+            cp -r /deploy-cache/${{ env.REPO_NAME }} /release/${{ env.REPO_NAME }}/${{ env.REPO_TAG }}
+            cp -r /deploy-cache/${{ env.REPO_NAME }} /deployment/${{ env.REPO_NAME }}
+          
+      - name: Reload remote application
+        if: ${{ inputs.reload == false }}
+        uses: appleboy/ssh-action@master
+        with:
+          script: pm2 restart ${{ env.REPO_NAME }}
+          
+      - name: Restart remote application
+        if: ${{ inputs.reload == true }}
+        uses: appleboy/ssh-action@master
+        with:
+          script: pm2 reload ${{ env.REPO_NAME }}
