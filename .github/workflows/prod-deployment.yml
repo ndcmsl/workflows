@@ -12,6 +12,11 @@ on:
         description: "SSH password"
         required: true
     inputs:
+      port:
+        type: number
+        description: "SSH port"
+        required: false
+        default: 22
       reload: 
         type: boolean
         description: "Use reload instead of restart"
