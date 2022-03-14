@@ -21,7 +21,10 @@ on:
         type: boolean
         required: true
         default: false
-      
+      environment:
+        type: string
+        required: false
+        default: integration      
 jobs:
   send:
     runs-on: ubuntu-latest
@@ -41,4 +44,5 @@ jobs:
           title: ${{ env.REPO_NAME }}
           sender-name: ${{ inputs.sender-name }}
           sender-image: ${{ inputs.sender-image }}
+          environment: ${{ inputs.environment }}
           tag: ${{ inputs.tag }}
