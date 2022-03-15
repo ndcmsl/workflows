@@ -1,0 +1,48 @@
+name: Send cliq
+on:
+  workflow_call:
+    secrets:
+      webhook:
+        description: "Webhook channel"
+        required: true
+      token_cliq:
+        description: "Cliq token"
+        required: true
+    inputs:
+      sender-name:
+        type: string
+        required: false
+        default: 'Github Actions'
+      sender-image:
+        type: string
+        required: false
+        default: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
+      tag:
+        type: boolean
+        required: true
+        default: false
+      environment:
+        type: string
+        required: false
+        default: integration      
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set repository name
+        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+
+      - name: Send Cliq
+        uses: ndcmsl/cliq-sender-action@main
+        with:
+          webhook: ${{ secrets.webhook }}
+          token: ${{ secrets.token_cliq }}
+          title: ${{ env.REPO_NAME }}
+          sender-name: ${{ inputs.sender-name }}
+          sender-image: ${{ inputs.sender-image }}
+          environment: ${{ inputs.environment }}
+          tag: ${{ inputs.tag }}
