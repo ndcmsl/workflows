@@ -29,3 +29,22 @@ jobs:
         run: npm ci
       - name: Release
         run: npx semantic-release
+      - name: Get version core-nest-module
+        run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
+      - name: Gen Doc
+        id: docGeneration
+        uses: ndcmsl/openapi-doc-gen-action@main
+        with:
+            token: ${{ secrets.GH_TOKEN }}
+            repo: ${{ github.repository }}
+            core-nest-module-version: ${{ env.CORE_NEST_MODULE_VERSION }}
+      - name: Get diff openapi.json
+        run: echo DIFF_OPENAPI=$(git diff --name-only | grep openapi.json) >> $GITHUB_ENV
+      - name: Commit OpenApi doc
+        if: ${{ steps.docGeneration.outputs.topic == 'microservice' && env.DIFF_OPENAPI == 'openapi.json' }}
+        run: |
+            git config --global user.email "actions@github.com"
+            git config --global user.name "Github Action"
+            git add openapi.json
+            git commit -m "chore: update API docs [skip ci]"
+            git push https://${{ env.GH_TOKEN }}@github.com/${{ github.repository }}.git
