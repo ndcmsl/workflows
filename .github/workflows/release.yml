@@ -47,5 +47,5 @@ jobs:
             git config --global user.name "Github Action"
             git add openapi.json
             git commit -m "chore: update API docs to ${{ steps.docGeneration.outputs.apiVersion }} [skip ci]"
-            git tag -a -m "Update API" ${{ steps.docGeneration.outputs.apiVersion }}
+            git tag -a -m "Update API" apiV${{ steps.docGeneration.outputs.apiVersion }}
             git push --follow-tags https://${{ env.GH_TOKEN }}@github.com/${{ github.repository }}.git
