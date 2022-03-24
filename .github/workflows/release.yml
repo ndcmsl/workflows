@@ -35,7 +35,7 @@ jobs:
         id: docGeneration
         uses: ndcmsl/openapi-doc-gen-action@main
         with:
-            token: ${{ secrets.GH_TOKEN }}
+            token: ${{ secrets.token }}
             repo: ${{ github.repository }}
             core-nest-module-version: ${{ env.CORE_NEST_MODULE_VERSION }}
       - name: Get diff openapi.json
