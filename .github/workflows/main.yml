@@ -52,7 +52,7 @@ jobs:
             ${{ github.repository }}
           tags: |
             type=ref,event=branch
-            type=match,pattern=\d.\d.\d
+            type=semver,pattern={{version}}
 
       - name: Login to DockerHub
         uses: docker/login-action@v1 
