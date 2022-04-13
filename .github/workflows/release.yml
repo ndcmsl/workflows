@@ -39,7 +39,7 @@ jobs:
           repo: ${{ github.repository }}
           core-nest-module-version: ${{ env.CORE_NEST_MODULE_VERSION }}
       - name: Commit OpenApi doc
-        if: ${{ steps.docGeneration.outputs.commitDoc }}
+        if: ${{ steps.docGeneration.outputs.commitDoc == 'true' }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "Github Action"
