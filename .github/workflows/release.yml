@@ -54,7 +54,7 @@ jobs:
       - name: Commit doc to openapi-specs
         run: |
           cd openapi-specs
-          git checkout origin/feat/MS-176-documentacion-api-confluence
+          git checkout feat/MS-176-documentacion-api-confluence origin/feat/MS-176-documentacion-api-confluence
           git add .
           git commit -m "chore: update ${{ env.REPO_NAME }} version to ${{ steps.docGeneration.outputs.apiVersion }}"
           git tag -a -m "update API" ${{ env.REPO_NAME }}-${{ steps.docGeneration.outputs.apiVersion }}
