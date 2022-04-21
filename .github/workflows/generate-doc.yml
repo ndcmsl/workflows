@@ -8,6 +8,11 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Get version core-nest-module
         run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
       - name: Clone openapi-specs repo
