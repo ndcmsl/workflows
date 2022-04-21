@@ -1,0 +1,38 @@
+name: Generate Api Documentation
+on:
+  workflow_call:
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get version core-nest-module
+        run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
+      - name: Clone openapi-specs repo
+        run: git clone https://${{ env.GH_TOKEN }}@github.com/ndcmsl/openapi-specs.git
+      - name: Gen Doc
+        id: docGeneration
+        uses: ndcmsl/openapi-doc-gen-action@main
+        with:
+          token: ${{ secrets.token }}
+          repo: ${{ github.repository }}
+          core-nest-module-version: ${{ env.CORE_NEST_MODULE_VERSION }}
+      - name: Commit OpenApi doc
+        if: ${{ steps.docGeneration.outputs.commitDoc == 'true' }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "Github Action"
+          git add openapi.json
+          git commit -m "chore: update API docs to ${{ steps.docGeneration.outputs.apiVersion }} [skip ci]"
+          git tag -a -m "Update API" apiV${{ steps.docGeneration.outputs.apiVersion }}
+          git push --follow-tags https://${{ env.GH_TOKEN }}@github.com/${{ github.repository }}.git
+      - name: Commit doc to openapi-specs
+        if: ${{ env.CORE_NEST_MODULE_VERSION >= 31 }}
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "Github Action"
+          cd openapi-specs
+          git checkout ${{ github.ref_name }}
+          git add .
+          git commit -m "chore: update ${{ env.REPO_NAME }} version to ${{ steps.docGeneration.outputs.apiVersion }}"
+          git tag -a -m "update API" ${{ env.REPO_NAME }}-${{ steps.docGeneration.outputs.apiVersion }}
+          git push --follow-tags
