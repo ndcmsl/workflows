@@ -48,7 +48,9 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "Github Action"
+          git stash
           git checkout $([[ '${{ github.ref_name }}' == 'dev' ]] && echo 'dev' || echo 'main')
+          git stash pop
           git add openapi.json
           git commit -m "chore: update API docs to ${{ steps.docGeneration.outputs.apiVersion }} [skip ci]"
           git tag -a -m "Update API" apiV${{ steps.docGeneration.outputs.apiVersion }}
@@ -59,7 +61,9 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "Github Action"
           cd openapi-specs
+          git stash
           git checkout $([[ '${{ github.ref_name }}' == 'dev' ]] && echo 'dev' || echo 'main')
+          git stash pop
           git add .
           git commit -m "chore: update ${{ env.REPO_NAME }} version to ${{ steps.docGeneration.outputs.apiVersion }}"
           git tag -a -m "update API" ${{ env.REPO_NAME }}-${{ steps.docGeneration.outputs.apiVersion }}
