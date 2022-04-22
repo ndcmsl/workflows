@@ -23,6 +23,8 @@ jobs:
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
       - name: Setup pnpm
         uses: pnpm/action-setup@v2.2.1
+        with:
+          version: 6.32.3
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
