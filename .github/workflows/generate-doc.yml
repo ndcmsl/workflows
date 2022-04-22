@@ -31,7 +31,7 @@ jobs:
           registry-url: "https://npm.pkg.github.com"
           cache: 'pnpm'
       - name: Install dependencies
-        run: npx pnpm install
+        run: pnpm install
       - name: Get version core-nest-module
         run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
       - name: Clone openapi-specs repo
@@ -53,7 +53,7 @@ jobs:
           git tag -a -m "Update API" apiV${{ steps.docGeneration.outputs.apiVersion }}
           git push --follow-tags https://${{ secrets.token }}@github.com/${{ github.repository }}.git
       - name: Commit doc to openapi-specs
-        if: ${{ env.CORE_NEST_MODULE_VERSION >= 31 }}
+        if: ${{ contains(env.CORE_NEST_MODULE_VERSION, '31') }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "Github Action"
