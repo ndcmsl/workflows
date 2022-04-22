@@ -13,6 +13,19 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Set repository name
+        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+      - name: Setup pnpm
+        uses: pnpm/action-setup@2.2.1
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          scope: "@ndcmsl"
+          registry-url: "https://npm.pkg.github.com"
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
       - name: Get version core-nest-module
         run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
       - name: Clone openapi-specs repo

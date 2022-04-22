@@ -21,15 +21,21 @@ jobs:
           persist-credentials: false
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+      - name: Setup pnpm
+        uses: pnpm/action-setup@2.2.1
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 'lts/*'
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
+          cache: 'pnpm'
       - name: Install dependencies
-        run: npx pnpm install
+        run: pnpm install
       - name: Release
         run: npx semantic-release
-      - name: Generate Api Doc
-        uses: ndcmsl/workflows/.github/workflows/generate-doc.yml@feat/MS-176-documentacion-api-confluence
+  documentation:
+    needs: [release]
+    uses: ndcmsl/workflows/.github/workflows/generate-doc.yml@feat/MS-176-documentacion-api-confluence
+    secrets:
+      token: ${{ secrets.token }}
