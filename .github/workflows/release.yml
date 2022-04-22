@@ -36,8 +36,3 @@ jobs:
         run: pnpm install
       - name: Release
         run: npx semantic-release
-  documentation:
-    needs: [release]
-    uses: ndcmsl/workflows/.github/workflows/generate-doc.yml@feat/MS-176-documentacion-api-confluence
-    secrets:
-      token: ${{ secrets.token }}
