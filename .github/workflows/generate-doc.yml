@@ -4,6 +4,10 @@ on:
     secrets:
       token:
         required: true
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
 jobs:
   generate:
     runs-on: ubuntu-latest
