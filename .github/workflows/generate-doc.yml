@@ -27,7 +27,7 @@ jobs:
           registry-url: "https://npm.pkg.github.com"
           cache: 'pnpm'
       - name: Install dependencies
-        run: pnpm install
+        run: npx pnpm install
       - name: Get version core-nest-module
         run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
       - name: Clone openapi-specs repo

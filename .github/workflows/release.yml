@@ -33,7 +33,7 @@ jobs:
           registry-url: "https://npm.pkg.github.com"
           cache: 'pnpm'
       - name: Install dependencies
-        run: pnpm install
+        run: npx pnpm install
       - name: Release
         run: npx semantic-release
   documentation:
