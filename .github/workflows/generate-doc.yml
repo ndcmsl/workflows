@@ -37,7 +37,7 @@ jobs:
       - name: Get version core-nest-module
         run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
       - name: Get core-nest-module minor version
-        run: echo CORE_NEST_MODULE_MINOR_VERSION=$(cut -d '.' -f 2 <<< ${{ env.CORE_NEST_MODULE }}) >> $GITHUB_ENV
+        run: echo CORE_NEST_MODULE_MINOR_VERSION=$(cut -d '.' -f 2 <<< ${{ env.CORE_NEST_MODULE_VERSION }}) >> $GITHUB_ENV
       - name: Clone openapi-specs repo
         run: git clone -b ${{ env.BRANCH_NAME }} https://${{ secrets.token }}@github.com/ndcmsl/openapi-specs.git
       - name: Gen Doc
