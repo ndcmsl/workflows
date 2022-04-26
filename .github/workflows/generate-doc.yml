@@ -58,7 +58,7 @@ jobs:
           git tag -a -m "Update API" apiV${{ steps.docGeneration.outputs.apiVersion }}
           git push --follow-tags https://${{ secrets.token }}@github.com/${{ github.repository }}.git
       - name: Commit docs to openapi-specs
-        if: ${{ steps.docGeneration.outputs.commitDoc == 'true' && env.CORE_NEST_MODULE_MINOR_VERSION > 31 }}
+        if: ${{ steps.docGeneration.outputs.commitDoc == 'true' && env.CORE_NEST_MODULE_MINOR_VERSION >= 31 }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "Github Action"
