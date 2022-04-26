@@ -19,31 +19,20 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Set repository name
+        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.2.1
+        with:
+          version: 6.32.3
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 'lts/*'
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
+          cache: 'pnpm'
       - name: Install dependencies
-        run: npx pnpm install
+        run: pnpm install
       - name: Release
         run: npx semantic-release
-      - name: Get version core-nest-module
-        run: echo CORE_NEST_MODULE_VERSION=$(npm list --depth=0 @ndcmsl/core-nest-module | grep @ndcmsl/core-nest-module | cut -d'@' -f3) >> $GITHUB_ENV
-      - name: Gen Doc
-        id: docGeneration
-        uses: ndcmsl/openapi-doc-gen-action@main
-        with:
-          token: ${{ secrets.token }}
-          repo: ${{ github.repository }}
-          core-nest-module-version: ${{ env.CORE_NEST_MODULE_VERSION }}
-      - name: Commit OpenApi doc
-        if: ${{ steps.docGeneration.outputs.commitDoc == 'true' }}
-        run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "Github Action"
-          git add openapi.json
-          git commit -m "chore: update API docs to ${{ steps.docGeneration.outputs.apiVersion }} [skip ci]"
-          git tag -a -m "Update API" apiV${{ steps.docGeneration.outputs.apiVersion }}
-          git push --follow-tags https://${{ env.GH_TOKEN }}@github.com/${{ github.repository }}.git
