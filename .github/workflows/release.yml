@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -37,7 +37,7 @@ jobs:
       - name: Release
         run: npx semantic-release
       - name: Fetch new tag
-        run: git pull
+        run: git fetch
       - name: Get topics
         id: topics
         uses: ndcmsl/topic-action@main
