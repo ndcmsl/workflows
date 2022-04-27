@@ -37,7 +37,7 @@ jobs:
       - name: Release
         run: npx semantic-release
       - name: Fetch new tag
-        run: git fetch
+        run: git pull
       - name: Get topics
         id: topics
         uses: ndcmsl/topic-action@main
