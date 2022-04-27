@@ -36,3 +36,12 @@ jobs:
         run: pnpm install
       - name: Release
         run: npx semantic-release
+      - name: Send Cliq release
+        uses: ndcmsl/cliq-sender-action@main
+        with:
+          webhook: ${{ secrets.webhook }}
+          token: ${{ secrets.token_cliq }}
+          title: ${{ env.REPO_NAME }}
+          sender-name: Github Actions
+          sender-image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+          tag: true
