@@ -36,11 +36,30 @@ jobs:
         run: pnpm install
       - name: Release
         run: npx semantic-release
-      - name: Send Cliq release
+      - name: Fetch new tag
+        run: git fetch
+      - name: Get topics
+        id: topics
+        uses: ndcmsl/topic-action@main
+        with:
+          token: ${{ secrets.token }}
+          repo: ${{ github.repository }}
+      - name: Send Cliq release microservice
+        if: ${{ contains(steps.topics.outputs.topics, 'microservice') == 'true' }}
         uses: ndcmsl/cliq-sender-action@main
         with:
-          webhook: ${{ secrets.webhook }}
-          token: ${{ secrets.token_cliq }}
+          webhook: ${{ secrets.CLIQ_WEBHOOK_MS_RELEASE }}
+          token: ${{ secrets.CLIQ_TOKEN }}
+          title: ${{ env.REPO_NAME }}
+          sender-name: Github Actions
+          sender-image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+          tag: true
+      - name: Send Cliq release package
+        if: ${{ contains(steps.topics.outputs.topics, 'package') == 'true' }}
+        uses: ndcmsl/cliq-sender-action@main
+        with:
+          webhook: ${{ secrets.CLIQ_WEBHOOK_PKG_RELEASE }}
+          token: ${{ secrets.CLIQ_TOKEN }}
           title: ${{ env.REPO_NAME }}
           sender-name: Github Actions
           sender-image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
