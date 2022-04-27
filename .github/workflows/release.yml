@@ -48,7 +48,7 @@ jobs:
           token: ${{ secrets.token }}
           repo: ${{ github.repository }}
       - name: Send Cliq release microservice
-        if: ${{ contains(steps.topics.outputs.topics, 'microservice') == 'true' }}
+        if: ${{ contains(steps.topics.outputs.topics, 'microservice') }}
         uses: ndcmsl/cliq-sender-action@main
         with:
           webhook: ${{ secrets.CLIQ_WEBHOOK_MS_RELEASE }}
@@ -58,7 +58,7 @@ jobs:
           sender-image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
           tag: true
       - name: Send Cliq release package
-        if: ${{ contains(steps.topics.outputs.topics, 'package') == 'true' }}
+        if: ${{ contains(steps.topics.outputs.topics, 'package') }}
         uses: ndcmsl/cliq-sender-action@main
         with:
           webhook: ${{ secrets.CLIQ_WEBHOOK_PKG_RELEASE }}
