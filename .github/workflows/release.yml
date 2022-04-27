@@ -36,8 +36,11 @@ jobs:
         run: pnpm install
       - name: Release
         run: npx semantic-release
-      - name: Fetch new tag
-        run: git fetch
+      - name: Second Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Get topics
         id: topics
         uses: ndcmsl/topic-action@main
