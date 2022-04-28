@@ -8,6 +8,8 @@ env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
+  CLIQ_WEBHOOK_MS_RELEASE_ENV: ${{ secrets.CLIQ_WEBHOOK_MS_RELEASE }}
+  CLIQ_WEBHOOK_PKG_RELEASE_ENV: ${{ secrets.CLIQ_WEBHOOK_PKG_RELEASE }}
 jobs:
   release:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"
@@ -47,13 +49,11 @@ jobs:
         with:
           token: ${{ secrets.token }}
           repo: ${{ github.repository }}
-      - name: test
-        run: echo ${{ secrets.CLIQ_WEBHOOK_MS_RELEASE }}
       - name: Send Cliq release microservice
         if: ${{ contains(steps.topics.outputs.topics, 'microservice') }}
         uses: ndcmsl/cliq-sender-action@main
         with:
-          webhook: ${{ secrets.CLIQ_WEBHOOK_MS_RELEASE }}
+          webhook: ${{ env.CLIQ_WEBHOOK_MS_RELEASE_ENV }}
           token: ${{ secrets.CLIQ_TOKEN }}
           title: ${{ env.REPO_NAME }}
           sender-name: Github Actions
@@ -63,7 +63,7 @@ jobs:
         if: ${{ contains(steps.topics.outputs.topics, 'package') }}
         uses: ndcmsl/cliq-sender-action@main
         with:
-          webhook: ${{ secrets.CLIQ_WEBHOOK_PKG_RELEASE }}
+          webhook: ${{ secrets.CLIQ_WEBHOOK_PKG_RELEASE_ENV }}
           token: ${{ secrets.CLIQ_TOKEN }}
           title: ${{ env.REPO_NAME }}
           sender-name: Github Actions
