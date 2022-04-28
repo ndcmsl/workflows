@@ -47,6 +47,8 @@ jobs:
         with:
           token: ${{ secrets.token }}
           repo: ${{ github.repository }}
+      - name: test
+        run: echo ${{ secrets.CLIQ_WEBHOOK_MS_RELEASE }}
       - name: Send Cliq release microservice
         if: ${{ contains(steps.topics.outputs.topics, 'microservice') }}
         uses: ndcmsl/cliq-sender-action@main
