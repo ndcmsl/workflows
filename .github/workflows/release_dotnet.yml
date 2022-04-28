@@ -4,6 +4,10 @@ on:
     secrets:
       token:
         required: true
+      cliq_webhook:
+        required: true
+      cliq_token:
+        required: true    
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
@@ -15,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -29,3 +33,17 @@ jobs:
         run: npm install 
       - name: Release
         run: npx semantic-release
+      - name: Second Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Send Cliq release microservice
+        uses: ndcmsl/cliq-sender-action@main
+        with:
+          webhook: ${{ secrets.cliq_webhook }}
+          token: ${{ secrets.cliq_token }}
+          title: ${{ env.REPO_NAME }}
+          sender-name: Github Actions
+          sender-image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+          tag: true
