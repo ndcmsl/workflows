@@ -6,7 +6,6 @@ on:
         required: true
 env:
   GH_TOKEN: ${{ secrets.token }}
-  GITHUB_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
 jobs:
@@ -27,4 +26,4 @@ jobs:
         with:
           node-version: 'lts/*'
       - name: Release
-        run: npx semantic-release
+        run: npx semantic-release --dry-run
