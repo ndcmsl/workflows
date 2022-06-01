@@ -41,5 +41,5 @@ jobs:
           git config --global user.name "Github Action"
           cd openapi-specs
           git add .
-          git commit -m "chore: update ${{ env.REPO_NAME }} version to ${{ steps.docGeneration.outputs.apiVersion }}"
+          git commit -m "chore: update ${{ env.REPO_NAME }} API version"
           git push
