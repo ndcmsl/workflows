@@ -21,18 +21,16 @@ jobs:
           persist-credentials: false
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2.2.1
-        with:
-          version: 6.32.3
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 'lts/*'
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
-          cache: 'pnpm'
+          cache: 'npm'
+      - name: Install npm v8.11.0 
+        run: npm install -g npm@v8.11.0
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
       - name: Release
         run: npx semantic-release
