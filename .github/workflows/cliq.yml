@@ -19,7 +19,7 @@ on:
         default: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
       tag:
         type: boolean
-        required: true
+        required: false
         default: false
       environment:
         type: string
@@ -36,6 +36,10 @@ jobs:
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
 
+      - name: Get tag microservice
+        if: ${{ github.event.inputs.mode == 'deploy' && github.event.inputs.ref == 'main' }}
+        run: echo TAG_VERSION=$(mkdir tmp && cd tmp && git clone git@github.com:ndcmsl/${{ github.event.inputs.microservice }}.git && cd ${{ github.event.inputs.microservice }} && git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
+
       - name: Send Cliq
         uses: ndcmsl/cliq-sender-action@main
         with:
@@ -44,5 +48,5 @@ jobs:
           title: ${{ env.REPO_NAME }}
           sender-name: ${{ inputs.sender-name }}
           sender-image: ${{ inputs.sender-image }}
-          environment: ${{ inputs.environment }}
-          tag: ${{ inputs.tag }}
+          mode: release
+          version: ${{ env.TAG_VERSION }}
