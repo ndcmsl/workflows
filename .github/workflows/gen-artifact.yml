@@ -6,7 +6,7 @@ env:
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
 jobs:
-  send:
+  gen:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
