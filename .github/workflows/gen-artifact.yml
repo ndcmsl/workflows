@@ -1,6 +1,10 @@
 name: Gen artifact
 on:
   workflow_call:
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
 jobs:
   send:
     runs-on: ubuntu-latest
