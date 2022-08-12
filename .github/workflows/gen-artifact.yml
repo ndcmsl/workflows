@@ -1,6 +1,9 @@
 name: Gen artifact
 on:
   workflow_call:
+    secrets:
+      token:
+        required: true
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
@@ -31,7 +34,7 @@ jobs:
         run: npm install -g npm@v8.11.0
 
       - name: Install devDependencies
-        run: npm install -D
+        run: npm install
 
       - name: Build proyect
         run: npm run build
