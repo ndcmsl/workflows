@@ -16,10 +16,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set repository name
-        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
-
       - name: Get tag microservice
+        if: ${{ github.ref_name != 'dev' }}
         run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
 
       - name: Setup Node.js
@@ -33,7 +31,7 @@ jobs:
       - name: Install npm v8.11.0 
         run: npm install -g npm@v8.11.0
 
-      - name: Install devDependencies
+      - name: Install dependencies
         run: npm install
 
       - name: Build proyect
