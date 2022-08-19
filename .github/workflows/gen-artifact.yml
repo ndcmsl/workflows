@@ -37,6 +37,26 @@ jobs:
       - name: Build proyect
         run: npm run build
 
+      - name: Delete artifact main
+        if: ${{ github.ref_name != 'dev' }}
+        uses: ndcmsl/delete-artifact-action@main
+        continue-on-error: true
+        with:
+          github_token: main-${{ env.TAG_VERSION }}
+          owner: ndcmsl
+          repo: test-microservice
+          name: main-${{ env.TAG_VERSION }}
+
+      - name: Delete artifact dev
+        if: ${{ github.ref_name == 'dev' }}
+        uses: ndcmsl/delete-artifact-action@main
+        continue-on-error: true
+        with:
+          github_token: ${{secrets.GH_TOKEN}}
+          owner: ndcmsl
+          repo: test-microservice
+          name: dev
+
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }}
         uses: actions/upload-artifact@v3
