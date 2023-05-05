@@ -1,74 +1,74 @@
-name: Gen artifact
-on:
-  workflow_call:
-    secrets:
-      token:
-        required: true
-env:
-  GH_TOKEN: ${{ secrets.token }}
-  NPM_TOKEN: ${{ secrets.token }}
-  NODE_AUTH_TOKEN: ${{ secrets.token }}
-jobs:
-  gen:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+# name: Gen artifact
+# on:
+#   workflow_call:
+#     secrets:
+#       token:
+#         required: true
+# env:
+#   GH_TOKEN: ${{ secrets.token }}
+#   NPM_TOKEN: ${{ secrets.token }}
+#   NODE_AUTH_TOKEN: ${{ secrets.token }}
+# jobs:
+#   gen:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
 
-      - name: Get tag microservice
-        if: ${{ github.ref_name != 'dev' }}
-        run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
+#       - name: Get tag microservice
+#         if: ${{ github.ref_name != 'dev' }}
+#         run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 'lts/*'
-          scope: "@ndcmsl"
-          registry-url: "https://npm.pkg.github.com"
-          cache: 'npm'
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: 'lts/*'
+#           scope: "@ndcmsl"
+#           registry-url: "https://npm.pkg.github.com"
+#           cache: 'npm'
 
-      - name: Install npm v8.11.0 
-        run: npm install -g npm@v8.11.0
+#       - name: Install npm v8.11.0 
+#         run: npm install -g npm@v8.11.0
 
-      - name: Install dependencies
-        run: npm install
+#       - name: Install dependencies
+#         run: npm install
 
-      - name: Build proyect
-        run: npm run build
+#       - name: Build proyect
+#         run: npm run build
 
-      - name: Delete artifact main
-        if: ${{ github.ref_name != 'dev' }}
-        uses: ndcmsl/delete-artifact-action@main
-        continue-on-error: true
-        with:
-          github_token: main-${{ env.TAG_VERSION }}
-          owner: ndcmsl
-          repo: test-microservice
-          name: main-${{ env.TAG_VERSION }}
+#       - name: Delete artifact main
+#         if: ${{ github.ref_name != 'dev' }}
+#         uses: ndcmsl/delete-artifact-action@main
+#         continue-on-error: true
+#         with:
+#           github_token: main-${{ env.TAG_VERSION }}
+#           owner: ndcmsl
+#           repo: test-microservice
+#           name: main-${{ env.TAG_VERSION }}
 
-      - name: Delete artifact dev
-        if: ${{ github.ref_name == 'dev' }}
-        uses: ndcmsl/delete-artifact-action@main
-        continue-on-error: true
-        with:
-          github_token: ${{secrets.GH_TOKEN}}
-          owner: ndcmsl
-          repo: test-microservice
-          name: dev
+#       - name: Delete artifact dev
+#         if: ${{ github.ref_name == 'dev' }}
+#         uses: ndcmsl/delete-artifact-action@main
+#         continue-on-error: true
+#         with:
+#           github_token: ${{secrets.GH_TOKEN}}
+#           owner: ndcmsl
+#           repo: test-microservice
+#           name: dev
 
-      - name: Upload artifact main
-        if: ${{ github.ref_name != 'dev' }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: main-${{ env.TAG_VERSION }}
-          path: |
-            dist
+#       - name: Upload artifact main
+#         if: ${{ github.ref_name != 'dev' }}
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: main-${{ env.TAG_VERSION }}
+#           path: |
+#             dist
 
-      - name: Upload artifact dev
-        if: ${{ github.ref_name == 'dev' }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: dev
-          path: |
-            dist
+#       - name: Upload artifact dev
+#         if: ${{ github.ref_name == 'dev' }}
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: dev
+#           path: |
+#             dist
