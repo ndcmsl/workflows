@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Compress build
-        run: tar -cvzf dist.gz dist
+        run: tar -czf dist.gz dist/*
 
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }}
