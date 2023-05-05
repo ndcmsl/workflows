@@ -42,11 +42,14 @@ jobs:
       - name: Build proyect
         run: npm run build
 
+      - name: Compress build
+        run: tar -cvzf dist.gz dist
+
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }}
         uses: actions/upload-artifact@v3
         with:
           name: main-${{ env.TAG_VERSION }}
           path: |
-            dist
+            dist.gz
       
