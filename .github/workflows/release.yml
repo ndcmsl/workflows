@@ -34,3 +34,19 @@ jobs:
         run: npm install
       - name: Release
         run: npx semantic-release
+
+      - name: Get tag microservice
+        if: ${{ github.ref_name != 'dev' }}
+        run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
+      
+      - name: Build proyect
+        run: npm run build
+
+      - name: Upload artifact main
+        if: ${{ github.ref_name != 'dev' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: main-${{ env.TAG_VERSION }}
+          path: |
+            dist
+      
