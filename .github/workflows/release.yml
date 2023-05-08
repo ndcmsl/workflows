@@ -45,8 +45,8 @@ jobs:
       - name: Compress build
         run: tar -czf dist.gz dist/*
 
-      - name: Removing tsconfig.build file
-        run: rm dist/tsconfig.build.tsbuildinfo
+      # - name: Removing tsconfig.build file
+      #   run: rm dist/tsconfig.build.tsbuildinfo
 
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }}
