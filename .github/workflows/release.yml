@@ -42,11 +42,11 @@ jobs:
       - name: Build proyect
         run: npm run build
 
-      - name: Compress build
-        run: tar -czf dist.gz dist/*
-
       - name: Removing tsconfig.build file
         run: rm dist/tsconfig.build.tsbuildinfo
+
+      - name: Compress build
+        run: tar -czf dist.gz dist/*
 
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }}
