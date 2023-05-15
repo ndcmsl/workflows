@@ -4,10 +4,15 @@ on:
     secrets:
       token:
         required: true
+    inputs:
+      is-microservice:
+        required: true
+        type: boolean
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
+  IS_MICROSERVICE: ${{ inputs.is-microservice }}
 jobs:
   release:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"
@@ -43,6 +48,7 @@ jobs:
         run: npm run build
 
       - name: Removing tsconfig.build file
+        if: env.IS_MICROSERVICE == 'true'
         run: rm dist/tsconfig.build.tsbuildinfo
 
       - name: Compress build
