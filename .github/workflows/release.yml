@@ -6,7 +6,8 @@ on:
         required: true
     inputs:
       is-microservice:
-        required: true
+        required: false
+        default: false
         type: boolean
 env:
   GH_TOKEN: ${{ secrets.token }}
