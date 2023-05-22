@@ -34,8 +34,8 @@ jobs:
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
           cache: 'npm'
-      - name: Install npm v8.11.0 
-        run: npm install -g npm@v8.11.0
+      - name: Install npm v9.6.4 
+        run: npm install -g npm@v9.6.4
       - name: Install dependencies
         run: npm install
       - name: Release
