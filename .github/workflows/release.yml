@@ -18,7 +18,7 @@ jobs:
   release:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -27,15 +27,15 @@ jobs:
           persist-credentials: false
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.1.0'
-          scope: "@ndcmsl"
-          registry-url: "https://npm.pkg.github.com"
-          cache: 'npm'
-      - name: Install npm v9.6.4 
-        run: npm install -g npm@v9.6.4
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '20.1.0'
+      #     scope: "@ndcmsl"
+      #     registry-url: "https://npm.pkg.github.com"
+      #     cache: 'npm'
+      # - name: Install npm v9.6.4 
+      #   run: npm install -g npm@v9.6.4
       - name: Install dependencies
         run: npm install
       - name: Release
