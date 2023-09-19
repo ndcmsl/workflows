@@ -27,13 +27,13 @@ jobs:
           persist-credentials: false
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.6.1'
-          scope: "@ndcmsl"
-          registry-url: "https://npm.pkg.github.com"
-          cache: 'npm'
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '20.6.1'
+      #     scope: "@ndcmsl"
+      #     registry-url: "https://npm.pkg.github.com"
+      #     cache: 'npm'
       # - name: Install npm v9.6.4 
       #   run: npm install -g npm@v9.6.4
       - name: Install dependencies
