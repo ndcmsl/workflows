@@ -1,0 +1,48 @@
+name: Release node
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
+jobs:
+  release:
+    name: Release
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set repository name
+        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+      - name: Install dependencies
+        run: npm install
+      - name: Release
+        run: npx semantic-release
+
+      - name: Get tag maverick
+        if: ${{ github.ref_name != 'dev' }}
+        run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
+      
+      - name: Build proyect
+        run: npm run build
+        env:
+            MAVERICK_BFF_URL: ${{ secrets.MAVERICK_BFF_URL }}
+            STORAGE_SESSION_KEY: ${{ secrets.STORAGE_SESSION_KEY }}
+
+      - name: Compress build
+        run: tar -czf dist.gz dist/*
+
+      - name: Upload artifact main
+        if: ${{ github.ref_name != 'dev' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: main-${{ env.TAG_VERSION }}
+          path: |
+            dist.gz
+      
