@@ -18,6 +18,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Brotli compression
+        uses: preactjs/compressed-size-action@v2
+        with:
+          compression: "brotli"
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
       - name: Install dependencies
