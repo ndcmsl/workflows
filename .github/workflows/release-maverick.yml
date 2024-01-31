@@ -24,8 +24,6 @@ jobs:
         run: npm install
       - name: Release
         run: npx semantic-release
-      - name: patata
-        run: echo "dist/${REPO_NAME}"
         
       - name: Get tag maverick
         if: ${{ github.ref_name != 'dev' }}
@@ -37,7 +35,7 @@ jobs:
       - name: Test Brotli action
         uses: charlesworth/compress-action@0.6
         with:
-          target-directory: echo "dist/${{REPO_NAME}}"
+          target-directory: 'dist/${{REPO_NAME}}'
 
       - name: Compress build
         run: tar -czf dist.gz dist/*
