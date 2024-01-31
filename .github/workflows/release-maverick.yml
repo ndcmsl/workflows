@@ -24,7 +24,7 @@ jobs:
         run: npm install
       - name: Release
         run: npx semantic-release
-        
+
       - name: Get tag maverick
         if: ${{ github.ref_name != 'dev' }}
         run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
