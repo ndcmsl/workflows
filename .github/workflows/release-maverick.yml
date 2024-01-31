@@ -35,7 +35,7 @@ jobs:
       - name: Test Brotli action
         uses: charlesworth/compress-action@0.6
         with:
-          target-directory: 'dist/maverick-ecom'
+          target-directory: "dist/${REPO_NAME}"
 
       - name: Compress build
         run: tar -czf dist.gz dist/*
