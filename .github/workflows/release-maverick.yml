@@ -35,7 +35,7 @@ jobs:
       - name: Test Brotli action
         uses: charlesworth/compress-action@0.6
         with:
-          target-directory: 'dist/${{REPO_NAME}}'
+          target-directory: 'dist/$(echo ${{ github.repository }} | cut -d "/" -f 2)'
 
       - name: Compress build
         run: tar -czf dist.gz dist/*
