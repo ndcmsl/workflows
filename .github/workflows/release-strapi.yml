@@ -30,6 +30,10 @@ jobs:
       - name: Get tag microservice
         if: ${{ github.ref_name != 'dev' }}
         run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
+
+      - name: Create app.settings.js
+        run: |
+          echo "${{ secrets.APP_SETTINGS }}" > app.settings.js
       
       - name: Build proyect
         run: npm run build
