@@ -4,6 +4,10 @@ on:
     secrets:
       token:
         required: true
+      settings:
+        required: true
+      jwt_secret:
+        required: true
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
@@ -34,13 +38,13 @@ jobs:
       - name: Create .env file
         run: |
           cat > .env << EOF
-          JWT_SECRET=${{ secrets.STRAPI_MARKETING_ENV_JWT_SECRET }}
+          JWT_SECRET=${{ secrets.jwt_secret }}
           EOF
 
       - name: Create app.settings.js
         run: |
           cat > app.settings.js <<EOF
-          ${{ secrets.STRAPI_MARKETING_SETTINGS }}
+          ${{ secrets.settings }}
           EOF
       
       - name: Build proyect
