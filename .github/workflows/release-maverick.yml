@@ -32,10 +32,10 @@ jobs:
       - name: Build proyect
         run: npm run build
 
-      - name: Test Brotli action
-        uses: charlesworth/compress-action@0.6
-        with:
-          target-directory: dist/maverick-logistic
+     # - name: Test Brotli action
+        #uses: charlesworth/compress-action@0.6
+        #with:
+          #target-directory: dist/maverick-logistic
           #target-directory: 'dist/$(echo ${{ github.repository }} | cut -d "/" -f 2)'
 
       - name: Compress build
