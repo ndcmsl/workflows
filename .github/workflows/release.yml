@@ -53,7 +53,7 @@ jobs:
         run: rm dist/tsconfig.build.tsbuildinfo
 
       - name: Compress build
-        if: env.IS_MICROSERVICE == 'true's
+        if: env.IS_MICROSERVICE == 'true'
         run: tar -czf dist.gz dist/*
 
       - name: Upload artifact main
