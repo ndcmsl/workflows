@@ -53,12 +53,12 @@ jobs:
         run: rm dist/tsconfig.build.tsbuildinfo
 
       - name: Compress build
-        if: env.IS_MICROSERVICE == 'true'
+        if: env.IS_MICROSERVICE == 'true's
         run: tar -czf dist.gz dist/*
 
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }} && env.IS_MICROSERVICE == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: main-${{ env.TAG_VERSION }}
           path: |
