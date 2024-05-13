@@ -31,4 +31,5 @@ jobs:
       #   run: npm install -g npm@v9.6.4
       - name: create-release
         run: dotnet publish -c Release -o /deployment/dotner-erp.logistic/YourBlazorApp -r linux-x64 --self-contained false
-      
+      - name: start
+        run: cd /deployment/dotner-erp.logistic/YourBlazorApp/ && dotnet Erp.Logistic.dll     
