@@ -1,22 +1,15 @@
-name: Release node
+name: Release dotnet
 on:
   workflow_call:
     secrets:
       token:
         required: true
-    inputs:
-      is-microservice:
-        required: false
-        default: false
-        type: boolean
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
-  IS_MICROSERVICE: ${{ inputs.is-microservice }}
 jobs:
   release:
-    if: "!contains(github.event.commits[0].message, 'Initial commit')"
     name: Release
     runs-on: self-hosted
     steps:
