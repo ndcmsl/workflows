@@ -35,5 +35,5 @@ jobs:
         run: dotnet publish -c Release -o /deployment/dotnet-erp.logistic/YourBlazorApp -r linux-x64 --self-contained false
       - name: start service
         run: sudo systemctl start dotnet-erp.service
-      - name: Start 
-        run: cd /deployment/dotnet-erp.logistic/YourBlazorApp/ && dotnet Erp.Logistic.dll 
+     # - name: Start 
+     #   run: cd /deployment/dotnet-erp.logistic/YourBlazorApp/ && dotnet Erp.Logistic.dll 
