@@ -29,7 +29,11 @@ jobs:
       #     cache: 'npm'
       # - name: Install npm v9.6.4 
       #   run: npm install -g npm@v9.6.4
+      - name: Stop service
+        run: sudo systemctl stop dotnet-erp.service || true
       - name: create-release
-        run: dotnet publish -c Release -o /deployment/dotner-erp.logistic/YourBlazorApp -r linux-x64 --self-contained false
-      - name: start
-        run: cd /deployment/dotner-erp.logistic/YourBlazorApp/ && dotnet Erp.Logistic.dll     
+        run: dotnet publish -c Release -o /deployment/dotnet-erp.logistic/YourBlazorApp -r linux-x64 --self-contained false
+      - name: start service
+        run: sudo systemctl start dotnet-erp.service
+      - name: Start 
+        run: cd /deployment/dotnet-erp.logistic/YourBlazorApp/ && dotnet Erp.Logistic.dll 
