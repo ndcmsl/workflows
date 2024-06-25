@@ -51,6 +51,12 @@ jobs:
       - name: Create release
         run: dotnet publish /deployment/dotnet-erp.logistic/project/Erp.Logistic/Erp.Logistic.csproj -c Release -o /deployment/dotnet-erp.logistic/dist -r linux-x64 --self-contained false
 
+      - name: Create start script
+        run: |
+          echo '#!/bin/bash' > /deployment/dotnet-erp.logistic/start.sh
+          echo 'dotnet /deployment/dotnet-erp.logistic/dist/Erp.Logistic.dll' >> /deployment/dotnet-erp.logistic/start.sh
+        shell: bash
+
       - name: Set execute permission on start script
         run: chmod +x /deployment/dotnet-erp.logistic/start.sh
 
