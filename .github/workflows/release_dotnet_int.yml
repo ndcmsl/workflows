@@ -18,23 +18,23 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
       - name: Set repository name
-        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
-      # - name: Setup Node.js
-      #   uses: actions/setup-node@v3
-      #   with:
-      #     node-version: '20.6.1'
-      #     scope: "@ndcmsl"
-      #     registry-url: "https://npm.pkg.github.com"
-      #     cache: 'npm'
-      # - name: Install npm v9.6.4 
-      #   run: npm install -g npm@v9.6.4
-      # - name: Stop service
-      #  run: sudo systemctl stop dotnet-erp.service || true
-      - name: create-release
+        run: echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6'  # Cambia esto a la versión de .NET que estás usando
+
+      - name: Navigate to project directory
+        run: cd path/to/your/project
+
+      - name: Stop service
+        run: sudo pm2 stop Erp.Logistic || true
+
+      - name: Create release
         run: dotnet publish -c Release -o /deployment/dotnet-erp.logistic -r linux-x64 --self-contained false
-      - name: start service
-      #  run: sudo systemctl start dotnet-erp.service
+
+      - name: Start service
         run: sudo pm2 reload Erp.Logistic
-     # - name: Start 
-     #   run: cd /deployment/dotnet-erp.logistic/YourBlazorApp/ && dotnet Erp.Logistic.dll 
