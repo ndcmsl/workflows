@@ -34,6 +34,14 @@ jobs:
       #   run: sudo systemctl stop dotnet-erp.service || true
       - name: Setup .NET 6.x
         run: dotnet publish /deployment/dotnet-erp.logistic_test/project/dotnet-erp.logistic_test/Erp.Logistic/Erp.Logistic.csproj -c Release -o /deployment/dotnet-erp.logistic_test/dist -r linux-x64 --self-contained false
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_BEAST }}
+      - name: PM2 SSH COMMANDS
+        run: |
+          ssh -o StrictHostKeyChecking=no user@10.3.200.156 "pm2 flush Dotnet-Erp.Logistic_test || true"
+          ssh -o StrictHostKeyChecking=no user@10.3.200.156 "pm2 reload /deployment/dotnet-erp.logistic_test/ecosystem.config.js --time && pm2 reset all || true"
       # - name: start service
       #   run: sudo systemctl start dotnet-erp.service
       # - name: Start 
