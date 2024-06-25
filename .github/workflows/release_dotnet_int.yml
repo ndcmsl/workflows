@@ -23,18 +23,16 @@ jobs:
         run: echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '6'  # Cambia esto a la versión de .NET que estás usando
-
-      - name: Navigate to project directory
-        run: cd path/to/your/project
+        run: |
+          wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+          bash dotnet-install.sh --version 6.0.423 --install-dir $HOME/.dotnet
+          export PATH=$HOME/.dotnet:$PATH
 
       - name: Stop service
         run: sudo pm2 stop Erp.Logistic || true
 
       - name: Create release
-        run: dotnet publish -c Release -o /deployment/dotnet-erp.logistic -r linux-x64 --self-contained false
+        run: dotnet publish /deployment/dotnet-erp.logistic/YourBlazorApp.csproj -c Release -o /deployment/dotnet-erp.logistic -r linux-x64 --self-contained false
 
       - name: Start service
         run: sudo pm2 reload Erp.Logistic
