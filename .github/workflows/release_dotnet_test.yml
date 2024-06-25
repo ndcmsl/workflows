@@ -12,10 +12,7 @@ env:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dotnet-version: [ '3.1.x', '6.0.x' ]
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,11 +33,7 @@ jobs:
       # - name: Stop service
       #   run: sudo systemctl stop dotnet-erp.service || true
       - name: Setup .NET 6.x
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 6.x
-      - name: Build
-        run: dotnet build
+        run: dotnet publish /deployment/dotnet-erp.logistic_test/project/dotnet-erp.logistic_test/Erp.Logistic/Erp.Logistic.csproj -c Release -o /deployment/dotnet-erp.logistic_test/dist -r linux-x64 --self-contained false
       # - name: start service
       #   run: sudo systemctl start dotnet-erp.service
       # - name: Start 
