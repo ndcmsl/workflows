@@ -32,7 +32,7 @@ jobs:
       # - name: Stop service
       #  run: sudo systemctl stop dotnet-erp.service || true
       - name: create-release
-        run: dotnet publish -c Release -o /deployment/dotnet-erp.logistic/YourBlazorApp -r linux-x64 --self-contained false
+        run: dotnet publish -c Release -o /deployment/dotnet-erp.logistic -r linux-x64 --self-contained false
       - name: start service
       #  run: sudo systemctl start dotnet-erp.service
         run: sudo pm2 reload Erp.Logistic
