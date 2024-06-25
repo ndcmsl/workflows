@@ -19,8 +19,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Create deployment directory
-        run: mkdir -p /deployment/dotnet-erp.logistic/project
+      - name: Create and clean deployment directory
+        run: |
+          mkdir -p /deployment/dotnet-erp.logistic/project
+          rm -rf /deployment/dotnet-erp.logistic/project/*
 
       - name: Move project to deployment directory
         run: mv $GITHUB_WORKSPACE/* /deployment/dotnet-erp.logistic/project
