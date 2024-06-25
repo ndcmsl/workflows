@@ -73,5 +73,13 @@ jobs:
             ],
           };" > /deployment/dotnet-erp.logistic/ecosystem.config.js
 
+      - name: Show PM2 version and status
+        run: |
+          sudo pm2 --version
+          sudo pm2 list
+
       - name: Start service using PM2 ecosystem
         run: sudo pm2 start /deployment/dotnet-erp.logistic/ecosystem.config.js
+
+      - name: Show PM2 logs
+        run: sudo pm2 logs --lines 50 Erp.Logistic
