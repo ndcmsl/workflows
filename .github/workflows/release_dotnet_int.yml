@@ -82,4 +82,4 @@ jobs:
         run: sudo pm2 start /deployment/dotnet-erp.logistic/ecosystem.config.js
 
       - name: reload service
-        run: sudo pm2 reload Erp.Logistic
+        run: sudo pm2 restart Erp.Logistic
