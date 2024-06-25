@@ -1,0 +1,39 @@
+name: Release dotnet
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
+jobs:
+  release:
+    name: Release
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set repository name
+        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '20.6.1'
+      #     scope: "@ndcmsl"
+      #     registry-url: "https://npm.pkg.github.com"
+      #     cache: 'npm'
+      # - name: Install npm v9.6.4 
+      #   run: npm install -g npm@v9.6.4
+      # - name: Stop service
+      #   run: sudo systemctl stop dotnet-erp.service || true
+      - name: create-release
+        run: dotnet publish -c Release -o /deployment/dotnet-erp.logistic_test/Erp.Logistic/ -r linux-x64 --self-contained false
+      # - name: start service
+      #   run: sudo systemctl start dotnet-erp.service
+      # - name: Start 
+      #   run: cd /deployment/dotnet-erp.logistic/YourBlazorApp/ && dotnet Erp.Logistic.dll 
