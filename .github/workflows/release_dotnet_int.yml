@@ -81,5 +81,5 @@ jobs:
       - name: Start service using PM2 ecosystem
         run: sudo pm2 start /deployment/dotnet-erp.logistic/ecosystem.config.js
 
-      #- name: Show PM2 logs
-      #run: sudo pm2 logs --lines 50 Erp.Logistic
+      - name: reload service
+        run: sudo pm2 reload Erp.Logistic
