@@ -18,7 +18,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          path: /deployment/dotnet-erp.logistic/project
+
+      - name: Create deployment directory
+        run: mkdir -p /deployment/dotnet-erp.logistic/project
+
+      - name: Move project to deployment directory
+        run: mv $GITHUB_WORKSPACE/* /deployment/dotnet-erp.logistic/project
 
       - name: Set repository name
         run: echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d '/' -f 2)" >> $GITHUB_ENV
