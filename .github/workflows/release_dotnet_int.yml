@@ -45,8 +45,8 @@ jobs:
       - name: Verify project file exists
         run: ls -la /deployment/dotnet-erp.logistic/project/Erp.Logistic/Erp.Logistic.csproj
 
-      - name: Stop service
-        run: sudo pm2 stop Erp.Logistic || true
+      - name: Stop and delete service
+        run: sudo pm2 delete Erp.Logistic || true
 
       - name: Create release
         run: dotnet publish /deployment/dotnet-erp.logistic/project/Erp.Logistic/Erp.Logistic.csproj -c Release -o /deployment/dotnet-erp.logistic/dist -r linux-x64 --self-contained false
@@ -60,5 +60,18 @@ jobs:
       - name: Set execute permission on start script
         run: chmod +x /deployment/dotnet-erp.logistic/start.sh
 
-      - name: Start service
-        run: sudo pm2 start /deployment/dotnet-erp.logistic/start.sh --name Erp.Logistic
+      - name: Create PM2 ecosystem file
+        run: |
+          echo "module.exports = {
+            apps: [
+              {
+                name: 'Erp.Logistic',
+                script: '/deployment/dotnet-erp.logistic/start.sh',
+                instances: 1,
+                exec_mode: 'cluster_mode',
+              },
+            ],
+          };" > /deployment/dotnet-erp.logistic/ecosystem.config.js
+
+      - name: Start service using PM2 ecosystem
+        run: sudo pm2 start /deployment/dotnet-erp.logistic/ecosystem.config.js
