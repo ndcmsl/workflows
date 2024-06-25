@@ -44,7 +44,7 @@ jobs:
         run: dotnet publish /deployment/dotnet-erp.logistic/project/Erp.Logistic/Erp.Logistic.csproj -c Release -o /deployment/dotnet-erp.logistic/dist -r linux-x64 --self-contained false
 
       - name: Set execute permission on start script
-        run: chmod +x /deployment/dotnet-erp.logistic/dist/start
+        run: chmod +x /deployment/dotnet-erp.logistic/start.sh
 
       - name: Start service
-        run: sudo pm2 start /deployment/dotnet-erp.logistic/dist/start --name Erp.Logistic
+        run: sudo pm2 start /deployment/dotnet-erp.logistic/start.sh --name Erp.Logistic
