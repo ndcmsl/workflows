@@ -24,6 +24,12 @@ jobs:
           mkdir -p /deployment/dotnet-erp.logistic/project
           rm -rf /deployment/dotnet-erp.logistic/project/*
 
+      - name: Clean specific directories
+        run: |
+          rm -rf /deployment/dotnet-erp.logistic/project/Console.Erp.Logistic.OrderStockAssignment
+          rm -rf /deployment/dotnet-erp.logistic/project/Erp.Logistic
+          rm -rf /deployment/dotnet-erp.logistic/project/OrderStockAssignment
+
       - name: Move project to deployment directory
         run: mv $GITHUB_WORKSPACE/* /deployment/dotnet-erp.logistic/project
 
