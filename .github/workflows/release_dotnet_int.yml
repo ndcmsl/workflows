@@ -30,13 +30,13 @@ jobs:
           export PATH=$HOME/.dotnet:$PATH
 
       - name: Verify project file exists
-        run: ls -la /deployment/dotnet-erp.logistic/Erp.Logistic/Erp.Logistic.csproj
+        run: ls -la /deployment/dotnet-erp.logistic/project/Erp.Logistic/Erp.Logistic.csproj
 
       - name: Stop service
         run: sudo pm2 stop Erp.Logistic || true
 
       - name: Create release
-        run: dotnet publish /deployment/dotnet-erp.logistic/Erp.Logistic/Erp.Logistic.csproj -c Release -o /deployment/dotnet-erp.logistic/dist -r linux-x64 --self-contained false
+        run: dotnet publish /deployment/dotnet-erp.logistic/project/Erp.Logistic/Erp.Logistic.csproj -c Release -o /deployment/dotnet-erp.logistic/dist -r linux-x64 --self-contained false
 
       - name: Set execute permission on start script
         run: chmod +x /deployment/dotnet-erp.logistic/dist/start
