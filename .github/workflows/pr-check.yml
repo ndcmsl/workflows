@@ -1,0 +1,43 @@
+name: PR Merge & Build Check
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      is-microservice:
+        required: false
+        default: false
+        type: boolean
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
+  IS_MICROSERVICE: ${{ inputs.is-microservice }}
+
+jobs:
+  validate-merge-and-build:
+    name: Merge PR with main & compile
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Necesario para hacer merge con otra rama
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch target branch (main)
+        run: git fetch origin main
+
+      - name: Merge PR with main (test merge)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git merge origin/main --no-edit
+
+      - name: Build after merge
+        run: npm run build
