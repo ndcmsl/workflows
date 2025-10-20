@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }} && env.IS_MICROSERVICE == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: main-${{ env.TAG_VERSION }}
           path: |
