@@ -27,10 +27,9 @@ jobs:
         with:
           token: ${{ secrets.token }}
           base: develop
-          head: main
           title: "Sync main → develop"
           body: |
             PR automático generado por CI para mantener `develop` actualizado con `main`.
           branch: sync/main-to-develop
-          delete-branch: true
+          delete-branch: false
           labels: "auto-sync"
