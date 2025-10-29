@@ -1,0 +1,36 @@
+name: Sync main to develop
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create pull request from main to develop
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.token }}
+          base: develop
+          head: main
+          title: "Sync main → develop"
+          body: |
+            PR automático generado por CI para mantener `develop` actualizado con `main`.
+          branch: sync/main-to-develop
+          delete-branch: true
+          labels: "auto-sync"
