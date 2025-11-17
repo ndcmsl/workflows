@@ -1,0 +1,85 @@
+name: PR Merge & Build Check
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      is-microservice:
+        required: false
+        default: false
+        type: boolean
+      is-maverick:
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
+  IS_MICROSERVICE: ${{ inputs.is-microservice }}
+
+jobs:
+  validate-merge-and-build:
+    name: Merge PR with main & compile
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Necesario para hacer merge con otra rama
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 🔽🔽🔽 NUEVO: generar y validar permisos, opcional
+      - name: Generate permissions file
+        if: ${{ inputs['is-maverick'] == true }}
+        run: npm run permissions:generate
+
+      - name: Check permissions file is up to date
+        if: ${{ inputs['is-maverick'] == true }}
+        run: |
+          # Cambia esta ruta por la real de tu fichero de inserts
+          PERMISSIONS_FILE="sql/permissions.sql"
+
+          if [ ! -f "$PERMISSIONS_FILE" ]; then
+            echo "❌ No se ha encontrado $PERMISSIONS_FILE"
+            echo "Asegúrate de que existe y está versionado en el repo."
+            exit 1
+          fi
+
+          # Comprueba si el script ha modificado el fichero
+          if ! git diff --quiet -- "$PERMISSIONS_FILE"; then
+            echo "❌ El fichero de permisos $PERMISSIONS_FILE no está actualizado."
+            echo
+            echo "Probablemente has añadido/ cambiado permisos en componentes"
+            echo "y no has ejecutado el script en local antes de commitear."
+            echo
+            echo "✅ Arreglo:"
+            echo "  1) Ejecuta en local: npm run permissions:generate"
+            echo "  2) Revisa los cambios en $PERMISSIONS_FILE"
+            echo "  3) Commitea y vuelve a pushear la rama."
+            echo
+            echo "Diff detectado:"
+            git diff -- "$PERMISSIONS_FILE"
+            exit 1
+          fi
+
+          echo "✅ Permisos OK: $PERMISSIONS_FILE está sincronizado."
+      # 🔼🔼🔼 FIN BLOQUE NUEVO
+
+      - name: Fetch target branch (main)
+        run: git fetch origin main
+
+      - name: Merge PR with main (test merge)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git merge origin/main --no-edit
+
+      - name: Build after merge
+        run: npm run build
