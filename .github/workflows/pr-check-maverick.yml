@@ -44,7 +44,7 @@ jobs:
         if: ${{ inputs['is-maverick'] == true }}
         run: |
           # Cambia esta ruta por la real de tu fichero de inserts
-          PERMISSIONS_FILE="sql/permissions.sql"
+          PERMISSIONS_FILE="database/permissions.sql"
 
           if [ ! -f "$PERMISSIONS_FILE" ]; then
             echo "❌ No se ha encontrado $PERMISSIONS_FILE"
