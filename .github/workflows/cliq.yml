@@ -4,6 +4,8 @@ on:
     workflows: ["Release node"]
     types:
       - completed
+    branches:
+      - main
 
   workflow_call:
     secrets:
