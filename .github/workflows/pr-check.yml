@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0  # Necesario para hacer merge con otra rama
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
 
       - name: Fetch target branch (main)
         run: git fetch origin main
