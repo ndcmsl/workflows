@@ -18,24 +18,18 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Checkout all branches
+      - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: develop
-
-      - name: Fetch main branch
-        run: git fetch origin main:main
 
       - name: Create pull request from main to develop
-        uses: peter-evans/create-pull-request@v6
+        uses: repo-sync/pull-request@v2
         with:
-          token: ${{ secrets.token }}
-          base: main
-          head: develop
-          branch: sync/develop-to-main
-          title: "Sync develop → main"
-          body: |
-            PR automático generado por CI para mantener `main` actualizado con `develop`.
-          delete-branch: true
-          labels: "auto-sync"
+          github_token: ${{ secrets.token }}
+          source_branch: main
+          destination_branch: develop
+          pr_title: "Sync main → develop"
+          pr_body: |
+            PR automático generado por CI para mantener `develop` actualizado con `main`.
+          pr_label: "auto-sync"
