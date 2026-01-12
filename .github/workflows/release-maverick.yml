@@ -21,7 +21,7 @@ jobs:
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Release
         run: npx semantic-release
 
