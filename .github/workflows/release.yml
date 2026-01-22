@@ -18,7 +18,7 @@ jobs:
   release:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v5
