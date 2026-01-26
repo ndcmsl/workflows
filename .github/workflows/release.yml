@@ -37,7 +37,7 @@ jobs:
       # - name: Install npm v11.6.2 
       #   run: npm install -g npm@11.6.2
       - name: Install dependencies
-        run: npm i
+        run: npm ci
       - name: Release
         run: npx semantic-release
 
@@ -49,15 +49,15 @@ jobs:
         run: npm run build
 
       - name: Removing tsconfig.build file
-        if: env.IS_MICROSERVICE == 'true'
+        if: ${{ env.IS_MICROSERVICE == 'true' }}
         run: rm dist/tsconfig.build.tsbuildinfo
 
       - name: Compress build
-        if: env.IS_MICROSERVICE == 'true'
+        if: ${{ env.IS_MICROSERVICE == 'true' }}
         run: tar -czf dist.gz dist/*
 
       - name: Upload artifact main
-        if: ${{ github.ref_name != 'dev' }} && env.IS_MICROSERVICE == 'true'
+        if: ${{ github.ref_name != 'dev' && env.IS_MICROSERVICE == 'true' }}
         uses: actions/upload-artifact@v6
         with:
           name: main-${{ env.TAG_VERSION }}
