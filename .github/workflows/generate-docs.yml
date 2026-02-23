@@ -9,9 +9,15 @@
 # El script Python vive aquí (scripts/generate_release_docs.py) para no
 # exponer código interno en repos de producto/cliente.
 #
+# IMPORTANTE: La documentación se commitea directamente en la rama
+# target_branch (por defecto develop), NO se crea PR.
+#
+# Fuente de verdad para el diff: git diff --name-only entre el último tag
+# y HEAD. Solo se documentan los ficheros que aparecen ahí.
+#
 # El repo que llama a este workflow solo necesita:
 #   - __documentacion/  (carpeta de documentación existente)
-#   - Secret OPENAI_API_KEY configurado
+#   - Secrets: OPENAI_API_KEY y un token con permisos de escritura
 #
 # Uso desde otro repo:
 #   jobs:
@@ -19,7 +25,7 @@
 #       uses: ndcmsl/workflows/.github/workflows/generate-docs.yml@main
 #       secrets:
 #         openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-#         token: ${{ secrets.GITHUB_TOKEN }}
+#         token: ${{ secrets.GH_TOKEN }}
 ###############################################################################
 
 name: Generate release docs
@@ -31,7 +37,7 @@ on:
         description: "API key de OpenAI para generar documentación"
         required: true
       token:
-        description: "Token de GitHub con permisos de escritura (contents + pull-requests)"
+        description: "Token de GitHub con permisos de escritura"
         required: true
     inputs:
       docs_folder:
@@ -53,33 +59,34 @@ on:
         description: "Paths a incluir en el diff (espacio-separados)"
         type: string
         required: false
-        default: "core/ override/ classes/ controllers/ themes/ config/ modules/ __documentacion/"
+        default: "core/ override/ classes/ controllers/ themes/ config/ modules/"
       python_version:
         description: "Versión de Python"
         type: string
         required: false
         default: "3.12"
-      pr_base_branch:
-        description: "Rama base para el PR de documentación"
+      target_branch:
+        description: "Rama donde se commitea la documentación generada"
         type: string
         required: false
-        default: "master"
+        default: "develop"
 
 jobs:
   generate-docs:
-    name: Generate & PR release docs
+    name: Generate & commit release docs
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       # ---------------------------------------------------------------
       # 1. Checkout del repo que llama (Prestashop) — con historial
+      #    Se clona sobre target_branch para poder commitear ahí
       # ---------------------------------------------------------------
       - name: Checkout caller repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.target_branch }}
           fetch-depth: 0
           token: ${{ secrets.token }}
           path: repo
@@ -96,7 +103,9 @@ jobs:
           sparse-checkout: scripts
 
       # ---------------------------------------------------------------
-      # 3. Detectar último tag y construir inputs para el script
+      # 3. Detectar último tag y construir inputs para el script.
+      #    Genera archivo de LISTA EXACTA de ficheros modificados
+      #    con git diff --name-only (fuente de verdad).
       # ---------------------------------------------------------------
       - name: Build release notes input
         id: build-input
@@ -104,19 +113,35 @@ jobs:
         run: |
           set -euo pipefail
 
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Necesitamos los datos de master para comparar
+          git fetch origin master --tags 2>/dev/null || true
+
+          LAST_TAG=$(git describe --tags --abbrev=0 origin/master 2>/dev/null || echo "")
           echo "LAST_TAG=$LAST_TAG" >> "$GITHUB_ENV"
 
           if [ -n "$LAST_TAG" ]; then
-            RANGE="${LAST_TAG}..HEAD"
+            RANGE="${LAST_TAG}..origin/master"
             echo "📌 Último tag encontrado: $LAST_TAG"
           else
-            # Sin tags: usar los últimos 100 commits
-            RANGE="HEAD~100..HEAD"
-            echo "⚠ Sin tags — usando últimos 100 commits"
+            RANGE="origin/master~100..origin/master"
+            echo "⚠ Sin tags — usando últimos 100 commits de master"
           fi
 
           echo "RANGE=$RANGE" >> "$GITHUB_ENV"
+
+          # ── LISTA EXACTA de ficheros modificados (FUENTE DE VERDAD) ──
+          git diff --name-only ${RANGE} > /tmp/file_list.txt 2>/dev/null || true
+
+          FILE_COUNT=$(wc -l < /tmp/file_list.txt || echo "0")
+          echo "📄 Ficheros modificados: $FILE_COUNT"
+
+          if [ "$FILE_COUNT" -eq "0" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "⚠ Sin ficheros modificados. Saltando generación."
+            exit 0
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
 
           # Lista de commits
           git log ${RANGE} --pretty=format:"- %s (%h) [%an]" \
@@ -124,14 +149,6 @@ jobs:
 
           COMMIT_COUNT=$(wc -l < /tmp/commits.txt || echo "0")
           echo "📝 Commits encontrados: $COMMIT_COUNT"
-
-          if [ "$COMMIT_COUNT" -eq "0" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "⚠ Sin commits nuevos. Saltando generación."
-            exit 0
-          fi
-
-          echo "skip=false" >> "$GITHUB_OUTPUT"
 
           # Diff stat (resumen)
           git diff --stat ${RANGE} > /tmp/diff_stat.txt 2>/dev/null || true
@@ -142,6 +159,8 @@ jobs:
             > /tmp/diff.txt 2>/dev/null || true
 
           echo "📊 Tamaño del diff: $(wc -c < /tmp/diff.txt) bytes"
+          echo "📋 Primeros 20 ficheros modificados:"
+          head -20 /tmp/file_list.txt
 
       # ---------------------------------------------------------------
       # 4. Setup Python + dependencias
@@ -169,42 +188,31 @@ jobs:
             --commits /tmp/commits.txt \
             --diff-stat /tmp/diff_stat.txt \
             --diff /tmp/diff.txt \
+            --file-list /tmp/file_list.txt \
             --docs-dir "repo/${{ inputs.docs_folder }}" \
             --out-dir "repo/${{ inputs.output_folder }}" \
             --model "${{ inputs.model }}"
 
       # ---------------------------------------------------------------
-      # 6. Crear PR con la documentación generada (sobre el repo caller)
+      # 6. Commit directo a target_branch (develop)
       # ---------------------------------------------------------------
-      - name: Create Pull Request
+      - name: Commit docs to target branch
         if: steps.build-input.outputs.skip != 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.token }}
-          path: repo
-          commit-message: "docs: actualización automática de documentación de release"
-          title: "docs: actualización automática de documentación"
-          body: |
-            ## 📄 Documentación de release generada automáticamente
+        working-directory: repo
+        run: |
+          set -euo pipefail
 
-            Esta PR contiene documentación generada por IA tras los últimos cambios en `${{ inputs.pr_base_branch }}`.
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-            **Rango analizado**: `${{ env.RANGE }}`
-            **Último tag**: `${{ env.LAST_TAG || 'ninguno' }}`
-            **Modelo usado**: `${{ inputs.model }}`
+          git add "${{ inputs.docs_folder }}/" "${{ inputs.output_folder }}/" 2>/dev/null || true
 
-            ### Ficheros modificados
-            - `${{ inputs.output_folder }}/` — nueva release doc
-            - `${{ inputs.docs_folder }}/CHANGELOG_AI.md` — changelog acumulativo
-            - `${{ inputs.docs_folder }}/00_INDICE_DOCUMENTACION.md` — índice actualizado
+          if git diff --cached --quiet; then
+            echo "ℹ Sin cambios en documentación. Saltando commit."
+            exit 0
+          fi
 
-            ---
-            > ⚠ **Revisar antes de mergear**: la documentación es generada por IA y puede
-            > contener imprecisiones. Verificar que los cambios descritos coinciden con
-            > lo realmente implementado.
-          branch: docs/auto-release-update
-          base: ${{ inputs.pr_base_branch }}
-          labels: |
-            documentation
-            automated
-          delete-branch: true
+          git commit -m "docs: actualización automática de documentación de release [skip ci]"
+          git push origin ${{ inputs.target_branch }}
+
+          echo "✅ Documentación commiteada en ${{ inputs.target_branch }}"
