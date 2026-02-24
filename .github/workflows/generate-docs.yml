@@ -213,6 +213,16 @@ jobs:
           fi
 
           git commit -m "docs: actualización automática de documentación de release [skip ci]"
-          git push origin ${{ inputs.target_branch }}
+
+          # Pull con rebase para incorporar cambios concurrentes en target_branch
+          git pull --rebase origin ${{ inputs.target_branch }} || true
+
+          # Reintentar push hasta 3 veces (por si develop avanza durante el rebase)
+          for i in 1 2 3; do
+            git push origin ${{ inputs.target_branch }} && break
+            echo "⚠ Push fallido (intento $i/3). Reintentando con pull --rebase..."
+            sleep 5
+            git pull --rebase origin ${{ inputs.target_branch }} || true
+          done
 
           echo "✅ Documentación commiteada en ${{ inputs.target_branch }}"
