@@ -19,6 +19,11 @@ on:
         required: false
         default: ''
         type: string
+      package-name:
+        description: 'Display name for the GitHub Release (e.g. ecom.cart). Defaults to package-dir value.'
+        required: false
+        default: ''
+        type: string
 
 env:
   GH_TOKEN: ${{ secrets.token }}
@@ -166,7 +171,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.new-tag }}
-          name: "${{ inputs.package-dir }} ${{ steps.release.outputs.new-version }}"
+          name: "${{ inputs.package-name || inputs.package-dir }} ${{ steps.release.outputs.new-version }}"
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.token }}
