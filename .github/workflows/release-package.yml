@@ -1,0 +1,170 @@
+name: Release package from subdirectory
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      package-dir:
+        description: 'Subdirectory containing the package (e.g. package_src)'
+        required: true
+        type: string
+      tag-prefix:
+        description: 'Prefix for git tags to separate package releases from microservice releases (e.g. package-v)'
+        required: false
+        default: 'package-v'
+        type: string
+      filter-path:
+        description: 'Path to filter commits for release detection. Defaults to package-dir value.'
+        required: false
+        default: ''
+        type: string
+
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
+
+jobs:
+  detect-and-release:
+    if: "!contains(github.event.commits[0].message, '[skip ci]')"
+    name: Release package
+    runs-on: microservicios
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      new-version: ${{ steps.release.outputs.new-version }}
+      new-tag: ${{ steps.release.outputs.new-tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          token: ${{ secrets.token }}
+
+      - name: Set repository name
+        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+
+      #
+      # ---------- Fast release (replaces semantic-release) ----------
+      # semantic-release paginates ALL GitHub tags/releases via the API
+      # which is extremely slow on repos with hundreds/thousands of releases.
+      # This script uses local git tags exclusively → O(1) regardless of history size.
+      #
+      - name: Determine next version and release
+        id: release
+        env:
+          TAG_PREFIX: ${{ inputs.tag-prefix }}
+          PACKAGE_DIR: ${{ inputs.package-dir }}
+          FILTER_PATH: ${{ inputs.filter-path || inputs.package-dir }}
+        run: |
+          set -e
+
+          # ── 1. Find latest tag matching prefix ──
+          LATEST_TAG=$(git tag --sort=-v:refname | grep "^${TAG_PREFIX}" | head -1 || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            CURRENT_VERSION="0.0.0"
+            COMMIT_RANGE=""
+          else
+            CURRENT_VERSION=$(echo "$LATEST_TAG" | sed "s/^${TAG_PREFIX}//")
+            COMMIT_RANGE="${LATEST_TAG}..HEAD"
+          fi
+
+          echo "Latest tag: ${LATEST_TAG:-none}"
+          echo "Current version: $CURRENT_VERSION"
+
+          # ── 2. Get conventional commits since last tag, filtered by path ──
+          if [ -n "$COMMIT_RANGE" ]; then
+            COMMITS=$(git log "$COMMIT_RANGE" --pretty=format:"%s" -- "$FILTER_PATH" 2>/dev/null || echo "")
+          else
+            COMMITS=$(git log --pretty=format:"%s" -- "$FILTER_PATH" 2>/dev/null || echo "")
+          fi
+
+          if [ -z "$COMMITS" ]; then
+            echo "No new commits affecting $FILTER_PATH. Skipping release."
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Commits to analyse:"
+          echo "$COMMITS"
+
+          # ── 3. Determine bump type ──
+          BUMP="none"
+          while IFS= read -r commit; do
+            # BREAKING CHANGE → major
+            if echo "$commit" | grep -qE '^[a-z]+(\(.+\))?!:' || echo "$commit" | grep -qi 'BREAKING CHANGE'; then
+              BUMP="major"
+            # feat → minor
+            elif echo "$commit" | grep -qiE '^feat(\(.+\))?:' && [ "$BUMP" != "major" ]; then
+              BUMP="minor"
+            # fix / perf / refactor → patch
+            elif echo "$commit" | grep -qiE '^(fix|perf|refactor)(\(.+\))?:' && [ "$BUMP" = "none" ]; then
+              BUMP="patch"
+            fi
+          done <<< "$COMMITS"
+
+          if [ "$BUMP" = "none" ]; then
+            echo "No releasable conventional commits (feat/fix/perf/refactor). Skipping."
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── 4. Calculate new version ──
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+          case $BUMP in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          NEW_TAG="${TAG_PREFIX}${NEW_VERSION}"
+
+          echo "Bump: $BUMP → $NEW_VERSION ($NEW_TAG)"
+
+          # ── 5. Update package.json version ──
+          cd "$PACKAGE_DIR"
+          npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
+          cd "$GITHUB_WORKSPACE"
+
+          # ── 6. Install deps & build ──
+          cd "$PACKAGE_DIR"
+          npm ci
+          npm run build
+          cd "$GITHUB_WORKSPACE"
+
+          # ── 7. Commit, tag & push ──
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+
+          git add "${PACKAGE_DIR}/package.json"
+          git commit -m "chore(release): ${NEW_TAG} [skip ci]" || true
+          git tag -a "$NEW_TAG" -m "Release ${NEW_TAG}"
+          git push origin HEAD:${{ github.ref_name }} --follow-tags
+
+          # ── 8. Publish to npm registry ──
+          cd "$PACKAGE_DIR"
+          npm publish
+          cd "$GITHUB_WORKSPACE"
+
+          echo "✅ Released ${NEW_TAG}"
+
+          # ── 9. Outputs ──
+          echo "released=true" >> "$GITHUB_OUTPUT"
+          echo "new-version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "new-tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+
+      # ── 10. Create GitHub Release (lightweight API call, single POST) ──
+      - name: Create GitHub Release
+        if: steps.release.outputs.released == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.new-tag }}
+          name: "${{ inputs.package-dir }} ${{ steps.release.outputs.new-version }}"
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
