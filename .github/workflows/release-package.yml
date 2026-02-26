@@ -132,7 +132,7 @@ jobs:
 
           # ── 6. Install deps & build ──
           cd "$PACKAGE_DIR"
-          npm ci
+          npm install --ignore-scripts
           npm run build
           cd "$GITHUB_WORKSPACE"
 
@@ -144,6 +144,7 @@ jobs:
           git add "${PACKAGE_DIR}/package.json"
           git commit -m "chore(release): ${NEW_TAG} [skip ci]" || true
           git tag -a "$NEW_TAG" -m "Release ${NEW_TAG}"
+          git pull --rebase origin ${{ github.ref_name }}
           git push origin HEAD:${{ github.ref_name }} --follow-tags
 
           # ── 8. Publish to npm registry ──
