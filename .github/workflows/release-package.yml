@@ -61,6 +61,12 @@ jobs:
         run: |
           set -e
 
+          # ── 0. Configure git & pull latest (must run while tree is clean) ──
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git pull --rebase origin ${{ github.ref_name }}
+
           # ── 1. Find latest tag matching prefix ──
           LATEST_TAG=$(git tag --sort=-v:refname | grep "^${TAG_PREFIX}" | head -1 || echo "")
 
@@ -137,14 +143,9 @@ jobs:
           cd "$GITHUB_WORKSPACE"
 
           # ── 7. Commit, tag & push ──
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
-
           git add "${PACKAGE_DIR}/package.json"
           git commit -m "chore(release): ${NEW_TAG} [skip ci]" || true
           git tag -a "$NEW_TAG" -m "Release ${NEW_TAG}"
-          git pull --rebase origin ${{ github.ref_name }}
           git push origin HEAD:${{ github.ref_name }} --follow-tags
 
           # ── 8. Publish to npm registry ──
