@@ -1,5 +1,4 @@
 name: Release node
-
 on:
   workflow_call:
     secrets:
@@ -22,6 +21,9 @@ jobs:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"
     name: Release
     runs-on: microservicios
+    concurrency:
+      group: release-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: false
 
     steps:
       - name: Prepare persistent repo
@@ -40,10 +42,8 @@ jobs:
           fi
 
           cd "$REPO_DIR"
-
           git remote set-url origin "$REPO_URL"
 
-          echo "Trayendo cambios incrementales y tags..."
           git fetch origin \
             +refs/heads/*:refs/remotes/origin/* \
             +refs/tags/*:refs/tags/* \
@@ -64,13 +64,29 @@ jobs:
           node-version: '24.12.0'
           scope: "@ndcmsl"
           registry-url: "https://npm.pkg.github.com"
-          cache: 'npm'
-          cache-dependency-path: ${{ env.REPO_DIR }}/package-lock.json
+          package-manager-cache: false
+
+      - name: Compute npm cache key
+        id: npm-cache-key
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: |
+          set -euo pipefail
+          LOCK_HASH=$(sha256sum package-lock.json | awk '{print $1}')
+          echo "lock_hash=$LOCK_HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: /home/jferrandiz/.npm
+          key: ${{ runner.os }}-node24-npm-${{ steps.npm-cache-key.outputs.lock_hash }}
+          restore-keys: |
+            ${{ runner.os }}-node24-npm-
 
       - name: Install dependencies
         shell: bash
         working-directory: ${{ env.REPO_DIR }}
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Release
         shell: bash
