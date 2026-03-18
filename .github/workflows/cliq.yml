@@ -34,7 +34,7 @@ on:
         default: integration      
 jobs:
   send:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_call' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -48,11 +48,12 @@ jobs:
         run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
 
       - name: Send Cliq
-        uses: ndcmsl/cliq-sender-action@main
+        uses: ndcmsl/workflows/.github/actions/cliq-sender-action@main
         with:
           webhook: ${{ secrets.webhook }}
           token: ${{ secrets.token_cliq }}
           title: ${{ env.REPO_NAME }}
+          repository: ${{ github.repository }}
           sender-name: ${{ inputs.sender-name }}
           sender-image: ${{ inputs.sender-image }}
           mode: release
