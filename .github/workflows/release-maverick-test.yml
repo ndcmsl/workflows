@@ -67,10 +67,12 @@ jobs:
         run: tar -czf dist.gz dist/*
 
       - name: Runner diagnostics before upload
-        if: ${{ github.ref_name == 'main' }}
         run: |
           echo "=== DATE ==="
           date
+          echo
+          echo "=== CURRENT BRANCH ==="
+          echo "${{ github.ref_name }}"
           echo
           echo "=== UPTIME ==="
           uptime || true
@@ -98,8 +100,16 @@ jobs:
           path: dist.gz
           compression-level: 0
 
+      - name: Upload artifact branch
+        if: ${{ github.ref_name != 'main' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-${{ github.ref_name }}-${{ github.sha }}
+          path: dist.gz
+          compression-level: 0
+          retention-days: 3
+
       - name: Runner diagnostics after upload
-        if: ${{ github.ref_name == 'main' }}
         run: |
           echo "=== DATE AFTER UPLOAD ==="
           date
