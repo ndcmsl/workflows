@@ -1,25 +1,67 @@
 name: Release node
+
 on:
   workflow_call:
     secrets:
       token:
         required: true
+
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
   NODE_AUTH_TOKEN: ${{ secrets.token }}
+
 jobs:
   release:
     name: Release
     runs-on: microservicios
+
     steps:
+      - name: Start diagnostics
+        shell: bash
+        run: |
+          echo "=== WORKFLOW START ==="
+          date -Is
+          echo "Runner: $(uname -a)"
+          echo "PWD: $(pwd)"
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub ref_name: ${{ github.ref_name }}"
+          echo "GitHub repository: ${{ github.repository }}"
+          echo "Disk usage:"
+          df -h
+          echo "CPU info:"
+          nproc || true
+          echo "Memory info:"
+          free -h || true
+
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Post-checkout diagnostics
+        shell: bash
+        run: |
+          echo "=== POST CHECKOUT ==="
+          date -Is
+          git --version
+          git status --short --branch
+          echo "Last commits:"
+          git log --oneline -n 5 || true
+          echo "Tags count:"
+          git tag | wc -l || true
+          echo "Workspace size after checkout:"
+          du -sh . || true
+
       - name: Set repository name
-        run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+        shell: bash
+        run: |
+          echo "=== SET REPO NAME ==="
+          date -Is
+          echo "REPO_NAME=$(echo '${{ github.repository }}' | cut -d '/' -f 2)" >> "$GITHUB_ENV"
+          echo "Resolved repo name: $(echo '${{ github.repository }}' | cut -d '/' -f 2)"
+
       # - name: Setup Node.js
       #   uses: actions/setup-node@v5
       #   with:
@@ -27,28 +69,108 @@ jobs:
       #     scope: "@ndcmsl"
       #     registry-url: "https://npm.pkg.github.com"
       #     cache: 'npm'
-      # - name: Install npm v11.6.2 
+
+      # - name: Install npm v11.6.2
       #   run: npm install -g npm@11.6.2
+
+      - name: Node and npm diagnostics
+        shell: bash
+        run: |
+          echo "=== NODE / NPM DIAGNOSTICS ==="
+          date -Is
+          node -v || true
+          npm -v || true
+          which node || true
+          which npm || true
+          echo "npm registry:"
+          npm config get registry || true
+          echo "npm ping:"
+          time npm ping || true
+
       - name: Install dependencies
-        run: npm ci
+        shell: bash
+        run: |
+          echo "=== INSTALL DEPENDENCIES START ==="
+          date -Is
+          time npm ci --verbose
+          echo "=== INSTALL DEPENDENCIES END ==="
+          date -Is
+          echo "node_modules size:"
+          du -sh node_modules || true
+          echo "Top 30 biggest first-level node_modules:"
+          du -sh node_modules/* 2>/dev/null | sort -hr | head -n 30 || true
+
+      - name: Release diagnostics before semantic-release
+        shell: bash
+        run: |
+          echo "=== SEMANTIC RELEASE PRECHECK ==="
+          date -Is
+          git branch --show-current || true
+          git tag --sort=-v:refname | head -n 20 || true
+          echo "Remote info:"
+          git remote -v || true
+          echo "Repository size:"
+          du -sh . || true
+
       - name: Release
-        run: npx semantic-release
+        shell: bash
+        env:
+          DEBUG: semantic-release:*,@semantic-release/*
+        run: |
+          echo "=== SEMANTIC RELEASE START ==="
+          date -Is
+          time npx semantic-release
+          echo "=== SEMANTIC RELEASE END ==="
+          date -Is
 
       - name: Get tag maverick
         if: ${{ github.ref_name != 'dev' }}
-        run: echo TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1) >> $GITHUB_ENV
-      
-      - name: Build proyect
-        run: npm run build
+        shell: bash
+        run: |
+          echo "=== GET TAG ==="
+          date -Is
+          TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1)
+          echo "TAG_VERSION=$TAG_VERSION" >> "$GITHUB_ENV"
+          echo "Resolved TAG_VERSION=$TAG_VERSION"
 
-     # - name: Test Brotli action
-        #uses: charlesworth/compress-action@0.6
-        #with:
-          #target-directory: dist/maverick-logistic
-          #target-directory: 'dist/$(echo ${{ github.repository }} | cut -d "/" -f 2)'
+      - name: Build project
+        shell: bash
+        run: |
+          echo "=== BUILD START ==="
+          date -Is
+          time npm run build
+          echo "=== BUILD END ==="
+          date -Is
+          echo "dist size:"
+          du -sh dist || true
+          echo "dist content:"
+          find dist -maxdepth 3 -type f | sed 's#^# - #' | head -n 200 || true
 
       - name: Compress build
-        run: tar -czf dist.gz dist/*
+        shell: bash
+        run: |
+          echo "=== COMPRESS START ==="
+          date -Is
+          echo "Size before compression:"
+          du -sh dist || true
+          time tar -czvf dist.gz dist/*
+          echo "=== COMPRESS END ==="
+          date -Is
+          echo "Compressed file info:"
+          ls -lh dist.gz || true
+          du -sh dist.gz || true
+
+      - name: Artifact diagnostics
+        if: ${{ github.ref_name != 'dev' }}
+        shell: bash
+        run: |
+          echo "=== ARTIFACT PRE-UPLOAD ==="
+          date -Is
+          echo "Artifact name: main-${{ env.TAG_VERSION }}"
+          echo "Artifact file:"
+          ls -lh dist.gz || true
+          echo "Checksum:"
+          sha256sum dist.gz || true
 
       - name: Upload artifact main
         if: ${{ github.ref_name != 'dev' }}
@@ -57,5 +179,11 @@ jobs:
           name: main-${{ env.TAG_VERSION }}
           path: |
             dist.gz
-      
+          if-no-files-found: error
+          compression-level: 0
 
+      - name: End diagnostics
+        shell: bash
+        run: |
+          echo "=== WORKFLOW END ==="
+          date -Is

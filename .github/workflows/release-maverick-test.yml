@@ -1,0 +1,121 @@
+name: Release node
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: microservicios
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set repository name
+        run: echo "REPO_NAME=$(echo '${{ github.repository }}' | cut -d '/' -f 2)" >> "$GITHUB_ENV"
+
+      - name: Set safe branch name
+        run: echo "SAFE_REF_NAME=$(echo '${{ github.ref_name }}' | tr '/' '-')" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Release diagnostics before semantic-release
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          echo "=== DATE BEFORE RELEASE ==="
+          date
+          echo
+          echo "=== CURRENT BRANCH ==="
+          echo "${{ github.ref_name }}"
+          echo
+          echo "=== LAST TAGS ==="
+          git tag -l | tail -n 20
+          echo
+          echo "=== LAST COMMITS ==="
+          git log --oneline -n 10
+
+      - name: Release
+        if: ${{ github.ref_name == 'main' }}
+        env:
+          DEBUG: semantic-release:*
+        run: npx semantic-release
+
+      - name: Release diagnostics after semantic-release
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          echo "=== DATE AFTER RELEASE ==="
+          date
+
+      - name: Get release tag
+        if: ${{ github.ref_name == 'main' }}
+        run: echo "TAG_VERSION=$(git tag -l | sort -V | grep -i '^[1-9]' | tail -n 1)" >> "$GITHUB_ENV"
+
+      - name: Build project
+        run: npm run build
+
+      - name: Compress build
+        run: tar -czf dist.gz dist/*
+
+      - name: Runner diagnostics before upload
+        run: |
+          echo "=== DATE ==="
+          date
+          echo
+          echo "=== CURRENT BRANCH ==="
+          echo "${{ github.ref_name }}"
+          echo
+          echo "=== SAFE BRANCH ==="
+          echo "${{ env.SAFE_REF_NAME }}"
+          echo
+          echo "=== UPTIME ==="
+          uptime || true
+          echo
+          echo "=== CPU COUNT ==="
+          nproc || true
+          echo
+          echo "=== MEMORY ==="
+          free -h || true
+          echo
+          echo "=== DISK ==="
+          df -h || true
+          echo
+          echo "=== ARTIFACT SIZE ==="
+          ls -lh dist.gz
+          echo
+          echo "=== ARTIFACT HASH ==="
+          sha256sum dist.gz || true
+
+      - name: Upload artifact main
+        if: ${{ github.ref_name == 'main' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: main-${{ env.TAG_VERSION }}
+          path: dist.gz
+          compression-level: 0
+
+      - name: Upload artifact branch
+        if: ${{ github.ref_name != 'main' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-${{ env.SAFE_REF_NAME }}-${{ github.sha }}
+          path: dist.gz
+          compression-level: 0
+          retention-days: 3
+
+      - name: Runner diagnostics after upload
+        run: |
+          echo "=== DATE AFTER UPLOAD ==="
+          date
