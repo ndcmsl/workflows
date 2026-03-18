@@ -26,6 +26,9 @@ jobs:
       - name: Set repository name
         run: echo "REPO_NAME=$(echo '${{ github.repository }}' | cut -d '/' -f 2)" >> "$GITHUB_ENV"
 
+      - name: Set safe branch name
+        run: echo "SAFE_REF_NAME=$(echo '${{ github.ref_name }}' | tr '/' '-')" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: npm ci
 
@@ -74,6 +77,9 @@ jobs:
           echo "=== CURRENT BRANCH ==="
           echo "${{ github.ref_name }}"
           echo
+          echo "=== SAFE BRANCH ==="
+          echo "${{ env.SAFE_REF_NAME }}"
+          echo
           echo "=== UPTIME ==="
           uptime || true
           echo
@@ -104,7 +110,7 @@ jobs:
         if: ${{ github.ref_name != 'main' }}
         uses: actions/upload-artifact@v6
         with:
-          name: test-${{ github.ref_name }}-${{ github.sha }}
+          name: test-${{ env.SAFE_REF_NAME }}-${{ github.sha }}
           path: dist.gz
           compression-level: 0
           retention-days: 3
