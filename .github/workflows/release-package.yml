@@ -25,6 +25,10 @@ on:
         default: ''
         type: string
 
+concurrency:
+  group: release-${{ github.repository }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
 env:
   GH_TOKEN: ${{ secrets.token }}
   NPM_TOKEN: ${{ secrets.token }}
@@ -32,7 +36,7 @@ env:
 
 jobs:
   detect-and-release:
-    if: "!contains(github.event.commits[0].message, '[skip ci]')"
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]') }}
     name: Release package
     runs-on: microservicios
     outputs:
