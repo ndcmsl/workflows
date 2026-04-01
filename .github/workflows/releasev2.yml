@@ -1,0 +1,124 @@
+name: Release node
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      is-microservice:
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GH_TOKEN: ${{ secrets.token }}
+  NPM_TOKEN: ${{ secrets.token }}
+  NODE_AUTH_TOKEN: ${{ secrets.token }}
+  IS_MICROSERVICE: ${{ inputs.is-microservice }}
+
+jobs:
+  release:
+    if: "!contains(github.event.commits[0].message, 'Initial commit')"
+    name: Release
+    runs-on: microservicios
+    concurrency:
+      group: release-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Prepare persistent repo
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          REPO_URL="https://x-access-token:${{ secrets.token }}@github.com/${{ github.repository }}.git"
+          REPO_DIR="$HOME/github-cache/${{ github.repository }}"
+
+          mkdir -p "$(dirname "$REPO_DIR")"
+
+          if [ ! -d "$REPO_DIR/.git" ]; then
+            echo "Clonando repo por primera vez..."
+            git clone "$REPO_URL" "$REPO_DIR"
+          fi
+
+          cd "$REPO_DIR"
+          git remote set-url origin "$REPO_URL"
+
+          git fetch origin \
+            +refs/heads/*:refs/remotes/origin/* \
+            +refs/tags/*:refs/tags/* \
+            --prune
+
+          git reset --hard "${{ github.sha }}"
+          git clean -fdx
+
+          echo "REPO_DIR=$REPO_DIR" >> "$GITHUB_ENV"
+
+      - name: Set repository name
+        shell: bash
+        run: echo "REPO_NAME=$(echo '${{ github.repository }}' | cut -d '/' -f 2)" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24.12.0'
+          scope: "@ndcmsl"
+          registry-url: "https://npm.pkg.github.com"
+          package-manager-cache: false
+
+      - name: Compute npm cache key
+        id: npm-cache-key
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: |
+          set -euo pipefail
+          LOCK_HASH=$(sha256sum package-lock.json | awk '{print $1}')
+          echo "lock_hash=$LOCK_HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Restore npm cache
+        uses: actions/cache@v4
+        with:
+          path: /home/jferrandiz/.npm
+          key: ${{ runner.os }}-node24-npm-${{ steps.npm-cache-key.outputs.lock_hash }}
+          restore-keys: |
+            ${{ runner.os }}-node24-npm-
+
+      - name: Install dependencies
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Release
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: npx semantic-release
+
+      - name: Get tag microservice
+        if: ${{ github.ref_name != 'dev' }}
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: echo "TAG_VERSION=$(git describe --tags --abbrev=0)" >> "$GITHUB_ENV"
+
+      - name: Build project
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: npm run build
+
+      - name: Removing tsconfig.build file
+        if: ${{ env.IS_MICROSERVICE == 'true' }}
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: rm -f dist/tsconfig.build.tsbuildinfo
+
+      - name: Compress build
+        if: ${{ env.IS_MICROSERVICE == 'true' }}
+        shell: bash
+        working-directory: ${{ env.REPO_DIR }}
+        run: tar -czf dist.gz dist/*
+
+      - name: Upload artifact main
+        if: ${{ github.ref_name != 'dev' && env.IS_MICROSERVICE == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-${{ env.TAG_VERSION }}
+          path: ${{ env.REPO_DIR }}/dist.gz
