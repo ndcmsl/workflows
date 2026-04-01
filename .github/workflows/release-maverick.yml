@@ -20,6 +20,10 @@ jobs:
           persist-credentials: false
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
+      - name: Fetch semantic-release notes
+        run: |
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git fetch origin +refs/notes/semantic-release:refs/notes/semantic-release || true
       # - name: Setup Node.js
       #   uses: actions/setup-node@v5
       #   with:
