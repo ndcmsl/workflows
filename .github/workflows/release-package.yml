@@ -3,7 +3,7 @@ on:
   workflow_call:
     secrets:
       token:
-        required: true
+        required: false
     inputs:
       package-dir:
         description: 'Subdirectory containing the package (e.g. package_src)'
@@ -30,9 +30,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  GH_TOKEN: ${{ secrets.token }}
-  NPM_TOKEN: ${{ secrets.token }}
-  NODE_AUTH_TOKEN: ${{ secrets.token }}
+  GH_TOKEN: ${{ github.token }}
+  NPM_TOKEN: ${{ github.token }}
+  NODE_AUTH_TOKEN: ${{ github.token }}
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   detect-and-release:
@@ -177,4 +181,4 @@ jobs:
           name: "${{ inputs.package-name || inputs.package-dir }} ${{ steps.release.outputs.new-version }}"
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.token }}
+          GITHUB_TOKEN: ${{ github.token }}

@@ -4,17 +4,21 @@ on:
   workflow_call:
     secrets:
       token:
-        required: true
+        required: false
     inputs:
       is-microservice:
         required: false
         default: false
         type: boolean
 env:
-  GH_TOKEN: ${{ secrets.token }}
-  NPM_TOKEN: ${{ secrets.token }}
-  NODE_AUTH_TOKEN: ${{ secrets.token }}
+  GH_TOKEN: ${{ github.token }}
+  NPM_TOKEN: ${{ github.token }}
+  NODE_AUTH_TOKEN: ${{ github.token }}
   IS_MICROSERVICE: ${{ inputs.is-microservice }}
+
+permissions:
+  contents: read
+  packages: read
 
 jobs:
   validate-merge-and-build:

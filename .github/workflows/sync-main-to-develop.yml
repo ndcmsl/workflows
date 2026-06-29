@@ -8,7 +8,10 @@ on:
   workflow_call:
     secrets:
       token:
-        required: true
+        # Backwards compatibility for callers that still pass GH_TOKEN.
+        # This workflow intentionally uses github.token below to avoid
+        # attributing automated PRs to a personal access token owner.
+        required: false
 
 jobs:
   sync:
@@ -26,7 +29,7 @@ jobs:
       - name: Create pull request from main to develop
         uses: repo-sync/pull-request@v2
         with:
-          github_token: ${{ secrets.token }}
+          github_token: ${{ github.token }}
           source_branch: main
           destination_branch: develop
           pr_title: "Sync main → develop"

@@ -3,15 +3,22 @@ on:
   workflow_call:
     secrets:
       token:
-        required: true
+        required: false
       settings:
         required: true
       jwt_secret:
         required: true
 env:
-  GH_TOKEN: ${{ secrets.token }}
-  NPM_TOKEN: ${{ secrets.token }}
-  NODE_AUTH_TOKEN: ${{ secrets.token }}
+  GH_TOKEN: ${{ github.token }}
+  NPM_TOKEN: ${{ github.token }}
+  NODE_AUTH_TOKEN: ${{ github.token }}
+
+permissions:
+  contents: write
+  issues: write
+  packages: write
+  pull-requests: write
+
 jobs:
   release:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"

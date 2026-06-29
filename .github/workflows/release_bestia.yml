@@ -3,17 +3,24 @@ on:
   workflow_call:
     secrets:
       token:
-        required: true
+        required: false
     inputs:
       is-microservice:
         required: false
         default: false
         type: boolean
 env:
-  GH_TOKEN: ${{ secrets.token }}
-  NPM_TOKEN: ${{ secrets.token }}
-  NODE_AUTH_TOKEN: ${{ secrets.token }}
+  GH_TOKEN: ${{ github.token }}
+  NPM_TOKEN: ${{ github.token }}
+  NODE_AUTH_TOKEN: ${{ github.token }}
   IS_MICROSERVICE: ${{ inputs.is-microservice }}
+
+permissions:
+  contents: write
+  issues: write
+  packages: write
+  pull-requests: write
+
 jobs:
   release:
     if: "!contains(github.event.commits[0].message, 'Initial commit')"
