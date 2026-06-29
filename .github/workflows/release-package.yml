@@ -3,7 +3,7 @@ on:
   workflow_call:
     secrets:
       token:
-        required: false
+        required: true
     inputs:
       package-dir:
         description: 'Subdirectory containing the package (e.g. package_src)'
@@ -30,9 +30,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  GH_TOKEN: ${{ github.token }}
-  NPM_TOKEN: ${{ github.token }}
-  NODE_AUTH_TOKEN: ${{ github.token }}
+  RELEASE_BOT_APP_ID: 4176453
 
 permissions:
   contents: write
@@ -49,11 +47,26 @@ jobs:
       new-tag: ${{ steps.release.outputs.new-tag }}
 
     steps:
+      - name: Generate release bot token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ env.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.token }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Export release bot token
+        run: |
+          echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+          echo "NPM_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+          echo "NODE_AUTH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
@@ -74,8 +87,8 @@ jobs:
           set -e
 
           # ── 0. Configure git & pull latest (must run while tree is clean) ──
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "ndcmsl-release-bot[bot]"
+          git config user.email "298005331+ndcmsl-release-bot[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
           git pull --rebase origin ${{ github.ref_name }}
 
@@ -181,4 +194,4 @@ jobs:
           name: "${{ inputs.package-name || inputs.package-dir }} ${{ steps.release.outputs.new-version }}"
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}

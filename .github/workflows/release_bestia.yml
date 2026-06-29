@@ -3,17 +3,15 @@ on:
   workflow_call:
     secrets:
       token:
-        required: false
+        required: true
     inputs:
       is-microservice:
         required: false
         default: false
         type: boolean
 env:
-  GH_TOKEN: ${{ github.token }}
-  NPM_TOKEN: ${{ github.token }}
-  NODE_AUTH_TOKEN: ${{ github.token }}
   IS_MICROSERVICE: ${{ inputs.is-microservice }}
+  RELEASE_BOT_APP_ID: 4176453
 
 permissions:
   contents: write
@@ -27,15 +25,32 @@ jobs:
     name: Release
     runs-on: microservicios
     steps:
+      - name: Generate release bot token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ env.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.token }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Export release bot token
+        run: |
+          echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+          echo "NPM_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+          echo "NODE_AUTH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
+          token: ${{ steps.app-token.outputs.token }}
       - name: Set repository name
         run: echo REPO_NAME=$(echo ${{ github.repository }} | cut -d "/" -f 2) >> $GITHUB_ENV
       - name: Fetch semantic-release notes
         run: |
+          git config user.name "ndcmsl-release-bot[bot]"
+          git config user.email "298005331+ndcmsl-release-bot[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
           git fetch origin +refs/notes/semantic-release:refs/notes/semantic-release || true
       # - name: Setup Node.js
