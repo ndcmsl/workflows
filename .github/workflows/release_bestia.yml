@@ -65,7 +65,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Release
-        run: npx semantic-release
+        run: npx semantic-release --repository-url "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
 
       - name: Get tag microservice
         if: ${{ github.ref_name != 'dev' }}
