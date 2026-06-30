@@ -76,6 +76,9 @@ async function processRepo(repo, prefix) {
   const protectionResult = await ensureClassicProtectionBypass(repo, prefix);
   result[protectionResult] += 1;
 
+  const pushRestrictionResult = await ensureClassicPushRestrictionApp(repo, prefix);
+  result[pushRestrictionResult] += 1;
+
   return result;
 }
 
@@ -180,6 +183,42 @@ async function ensureClassicProtectionBypass(repo, prefix) {
     { apps: [RELEASE_BOT_APP_SLUG] },
   );
   log('changed', `${prefix} added classic protection bypass app=${RELEASE_BOT_APP_SLUG}`);
+  return 'changed';
+}
+
+async function ensureClassicPushRestrictionApp(repo, prefix) {
+  let protection;
+  try {
+    protection = await gh('GET', `/repos/${repo.full_name}/branches/${branch}/protection`);
+  } catch (error) {
+    if (error.status === 404) return 'skipped';
+    throw error;
+  }
+
+  if (!protection.restrictions) {
+    log('skip', `${prefix} push restrictions=none`);
+    return 'skipped';
+  }
+
+  const apps = protection.restrictions.apps || [];
+  const alreadyPresent = apps.some((app) => app.id === RELEASE_BOT_APP_ID || app.slug === RELEASE_BOT_APP_SLUG);
+
+  if (alreadyPresent) {
+    log('ok', `${prefix} push restriction app already present`);
+    return 'unchanged';
+  }
+
+  if (!apply) {
+    log('dry-run', `${prefix} would add push restriction app=${RELEASE_BOT_APP_SLUG}`);
+    return 'changed';
+  }
+
+  await gh(
+    'POST',
+    `/repos/${repo.full_name}/branches/${branch}/protection/restrictions/apps`,
+    [RELEASE_BOT_APP_SLUG],
+  );
+  log('changed', `${prefix} added push restriction app=${RELEASE_BOT_APP_SLUG}`);
   return 'changed';
 }
 
