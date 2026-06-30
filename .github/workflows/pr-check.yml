@@ -11,6 +11,7 @@ on:
         default: false
         type: boolean
 env:
+  RELEASE_BOT_APP_ID: 4176453
   GH_TOKEN: ${{ github.token }}
   NPM_TOKEN: ${{ github.token }}
   NODE_AUTH_TOKEN: ${{ github.token }}
@@ -24,8 +25,26 @@ jobs:
   validate-merge-and-build:
     name: Merge PR with main & compile
     runs-on: self-hosted
+    env:
+      HAS_RELEASE_BOT_PRIVATE_KEY: ${{ secrets.token != '' }}
 
     steps:
+      - name: Generate release bot token
+        if: ${{ env.HAS_RELEASE_BOT_PRIVATE_KEY == 'true' }}
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ env.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.token }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Export release bot token
+        if: ${{ env.HAS_RELEASE_BOT_PRIVATE_KEY == 'true' }}
+        run: |
+          echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+          echo "NPM_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+          echo "NODE_AUTH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+
       - name: Checkout PR code
         uses: actions/checkout@v5
         with:
