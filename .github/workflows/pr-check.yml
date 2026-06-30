@@ -4,7 +4,7 @@ on:
   workflow_call:
     secrets:
       token:
-        required: false
+        required: true
     inputs:
       is-microservice:
         required: false
@@ -12,9 +12,6 @@ on:
         type: boolean
 env:
   RELEASE_BOT_APP_ID: 4176453
-  GH_TOKEN: ${{ github.token }}
-  NPM_TOKEN: ${{ github.token }}
-  NODE_AUTH_TOKEN: ${{ github.token }}
   IS_MICROSERVICE: ${{ inputs.is-microservice }}
 
 permissions:
@@ -25,12 +22,9 @@ jobs:
   validate-merge-and-build:
     name: Merge PR with main & compile
     runs-on: self-hosted
-    env:
-      HAS_RELEASE_BOT_PRIVATE_KEY: ${{ secrets.token != '' }}
 
     steps:
       - name: Generate release bot token
-        if: ${{ env.HAS_RELEASE_BOT_PRIVATE_KEY == 'true' }}
         id: app-token
         uses: actions/create-github-app-token@v2
         with:
@@ -39,7 +33,6 @@ jobs:
           owner: ${{ github.repository_owner }}
 
       - name: Export release bot token
-        if: ${{ env.HAS_RELEASE_BOT_PRIVATE_KEY == 'true' }}
         run: |
           echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
           echo "NPM_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
