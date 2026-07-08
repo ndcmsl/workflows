@@ -1,0 +1,198 @@
+name: Refresh PR diffs
+
+on:
+  workflow_call:
+    inputs:
+      target_base:
+        description: Branch that open PRs target.
+        required: false
+        default: develop
+        type: string
+      temporary_base:
+        description: Temporary branch used to make GitHub recalculate PR diffs.
+        required: false
+        default: main
+        type: string
+      before_sha:
+        description: Previous target base commit SHA from the push event.
+        required: true
+        type: string
+      after_sha:
+        description: Current target base commit SHA from the push event.
+        required: true
+        type: string
+      include_drafts:
+        description: Include draft PRs in the refresh.
+        required: false
+        default: true
+        type: boolean
+      pr_limit:
+        description: Maximum number of open PRs to inspect.
+        required: false
+        default: 200
+        type: number
+    secrets:
+      token:
+        required: true
+
+jobs:
+  refresh-pr-diffs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    concurrency:
+      group: refresh-pr-diffs-${{ github.repository }}-${{ inputs.target_base }}
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ secrets.token }}
+      TARGET_BASE: ${{ inputs.target_base }}
+      TEMPORARY_BASE: ${{ inputs.temporary_base }}
+      INCLUDE_DRAFTS: ${{ inputs.include_drafts }}
+      PR_LIMIT: ${{ inputs.pr_limit }}
+      BEFORE_SHA: ${{ inputs.before_sha }}
+      AFTER_SHA: ${{ inputs.after_sha }}
+
+    steps:
+      - name: Validate inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${TARGET_BASE}" ]; then
+            echo "::error::target_base cannot be empty."
+            exit 1
+          fi
+
+          if [ -z "${TEMPORARY_BASE}" ]; then
+            echo "::error::temporary_base cannot be empty."
+            exit 1
+          fi
+
+          if [ "${TARGET_BASE}" = "${TEMPORARY_BASE}" ]; then
+            echo "::error::target_base and temporary_base must be different branches."
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch comparison refs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --force origin \
+            "+refs/heads/${TARGET_BASE}:refs/remotes/origin/${TARGET_BASE}" \
+            "+refs/heads/${TEMPORARY_BASE}:refs/remotes/origin/${TEMPORARY_BASE}"
+
+          if [ -n "${BEFORE_SHA}" ] && ! [[ "${BEFORE_SHA}" =~ ^0+$ ]] && ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags origin "${BEFORE_SHA}" || echo "::warning::Could not fetch previous base SHA ${BEFORE_SHA}."
+          fi
+
+          if [ -n "${AFTER_SHA}" ] && ! git cat-file -e "${AFTER_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags origin "${AFTER_SHA}" || echo "::warning::Could not fetch current base SHA ${AFTER_SHA}."
+          fi
+
+      - name: Refresh affected pull requests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${BEFORE_SHA}" ] || [[ "${BEFORE_SHA}" =~ ^0+$ ]]; then
+            echo "No previous base SHA is available. Nothing to compare."
+            exit 0
+          fi
+
+          if [ -z "${AFTER_SHA}" ]; then
+            AFTER_SHA="origin/${TARGET_BASE}"
+          fi
+
+          pr_rows="$(
+            gh pr list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --base "${TARGET_BASE}" \
+              --state open \
+              --limit "${PR_LIMIT}" \
+              --json number,isDraft,url \
+              --jq '.[] | [.number, .isDraft, .url] | @tsv'
+          )"
+
+          if [ -z "${pr_rows}" ]; then
+            echo "No open PRs target ${TARGET_BASE}."
+            exit 0
+          fi
+
+          refreshed=0
+          skipped=0
+
+          while IFS=$'\t' read -r number is_draft url; do
+            if [ -z "${number}" ]; then
+              continue
+            fi
+
+            if [ "${INCLUDE_DRAFTS}" != "true" ] && [ "${is_draft}" = "true" ]; then
+              echo "Skipping draft PR #${number}: ${url}"
+              skipped=$((skipped + 1))
+              continue
+            fi
+
+            pr_ref="refs/remotes/origin/pr/${number}"
+
+            if ! git fetch --no-tags --force origin "refs/pull/${number}/head:${pr_ref}" >/dev/null 2>&1; then
+              echo "::warning::Could not fetch head ref for PR #${number}: ${url}"
+              skipped=$((skipped + 1))
+              continue
+            fi
+
+            old_merge_base="$(git merge-base "${BEFORE_SHA}" "${pr_ref}" 2>/dev/null || true)"
+            new_merge_base="$(git merge-base "${AFTER_SHA}" "${pr_ref}" 2>/dev/null || true)"
+
+            if [ -z "${old_merge_base}" ] || [ -z "${new_merge_base}" ]; then
+              echo "::warning::Could not calculate merge-base for PR #${number}: ${url}"
+              skipped=$((skipped + 1))
+              continue
+            fi
+
+            if [ "${old_merge_base}" = "${new_merge_base}" ]; then
+              echo "Skipping PR #${number}; merge-base did not change."
+              skipped=$((skipped + 1))
+              continue
+            fi
+
+            reason="merge-base changed ${old_merge_base:0:7} -> ${new_merge_base:0:7}"
+
+            current_base="$(gh pr view "${number}" --repo "${GITHUB_REPOSITORY}" --json baseRefName --jq '.baseRefName')"
+
+            if [ "${current_base}" != "${TARGET_BASE}" ]; then
+              echo "Skipping PR #${number}; base is now ${current_base}."
+              skipped=$((skipped + 1))
+              continue
+            fi
+
+            echo "Refreshing PR #${number} (${reason}): ${url}"
+
+            if ! gh pr edit "${number}" --repo "${GITHUB_REPOSITORY}" --base "${TEMPORARY_BASE}"; then
+              echo "::warning::Could not temporarily change PR #${number} base to ${TEMPORARY_BASE}."
+              skipped=$((skipped + 1))
+              continue
+            fi
+
+            sleep 2
+
+            if ! gh pr edit "${number}" --repo "${GITHUB_REPOSITORY}" --base "${TARGET_BASE}"; then
+              echo "::warning::Could not restore PR #${number} base to ${TARGET_BASE}; retrying."
+              sleep 5
+
+              if ! gh pr edit "${number}" --repo "${GITHUB_REPOSITORY}" --base "${TARGET_BASE}"; then
+                echo "::error::PR #${number} may still target ${TEMPORARY_BASE}: ${url}"
+                exit 1
+              fi
+            fi
+
+            refreshed=$((refreshed + 1))
+          done <<< "${pr_rows}"
+
+          echo "Refreshed ${refreshed} PR(s); skipped ${skipped} PR(s)."
